@@ -23,6 +23,6 @@
     "mocha": "~1.17.0",
     "chai": "~1.8.1"
   },
-  "license": "MIT",
+  "license": "Apache 2.0",
   "engine": "node >= v0.11.*"
 }

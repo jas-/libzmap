@@ -1,3 +1,0 @@
-[submodule "src/zmap"]
-	path = src/zmap
-	url = https://github.com/zmap/zmap.git
