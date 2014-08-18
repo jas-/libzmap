@@ -1,0 +1,28 @@
+{
+  "name": "libzmap",
+  "version": "0.0.1",
+  "description": "zmap bindings for node.js",
+  "author": "Jason Gerfen <jason.gerfen@gmail.com>",
+  "keywords": [
+    "zmap",
+    "nmap network scanner"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/jas-/libzmap.git"
+  },
+  "bugs": {
+    "url": "https://github.com/jas-/libzmap/issues"
+  },
+  "scripts": {
+		"install": "node-gyp rebuild",
+    "start": "node index.js",
+    "test": "make test"
+  },
+  "devDependencies": {
+    "mocha": "~1.17.0",
+    "chai": "~1.8.1"
+  },
+  "license": "MIT",
+  "engine": "node >= v0.11.*"
+}
