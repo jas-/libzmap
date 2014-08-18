@@ -1,11 +1,24 @@
 {
-	"make_global_settings": [
-    ["CXX","/usr/bin/cmake"],
-    ["LINK","/usr/bin/cmake"],
-  ],
 	"targets": [
 	{
 		"target_name": "zmap",
+		"conditions": [
+			['OS=="linux"', {
+				"cflags": [
+					"-Wall -Wformat=2 -Wno-format-nonliteral",
+					"-pedantic -fno-strict-aliasing",
+					"-Wextra",
+					"-Wfloat-equal -Wundef -Wwrite-strings -Wredundant-decls",
+					"-Wnested-externs -Wbad-function-cast -Winit-self",
+					"-Wmissing-noreturn",
+					"-Wstack-protector",
+					"-std=gnu99",
+				],
+				"ldflags": [
+          "-pthread",
+        ]
+			}]
+		],
 		"sources": [
 			"src/zmap-1.2.1/src/aesrand.c",
 			"src/zmap-1.2.1/src/cyclic.c",
