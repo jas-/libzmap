@@ -2,10 +2,10 @@
 [node.js](http://nodejs.org) bindings for the [zmap](https://zmap.io/) network scanning utility.
 
 # installation
-Some libraries are necessary for zmap to compile correctly, install these first.
+Some libraries are necessary for zmap to compile correctly. Review the [instructions](https://github.com/jas-/libzmap/wiki/Installation) for your OS.
 
-Next clone this repo with the `--recursive` flag to include `zmap` as submodule.
+Now install this module with `npm`
+
 ```sh
-%> git clone --recursive https://github.com/jas-/libzmap.git
+%> npm install libzmap
 ```
-
