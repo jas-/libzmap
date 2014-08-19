@@ -36,13 +36,12 @@
 			"src/zmap-1.2.1/src/iterator.c",
 			"src/zmap-1.2.1/src/lexer.c",
 			"src/zmap-1.2.1/src/monitor.c",
-			"src/zmap-1.2.1/src/resv.c",
 			"src/zmap-1.2.1/src/send.c",
 			"src/zmap-1.2.1/src/shard.c",
 			"src/zmap-1.2.1/src/state.c",
-			"src/zmap-1.2.1/src/summary.c",
+			"src/zmap-1.2.1/src/recv.c",
 			"src/zmap-1.2.1/src/validate.c",
-			"src/zmap-1.2.1/src/zmap.c"
+			"src/zmap-1.2.1/src/zmap.c",
 		]
 	}],
 	"include_dirs": [
