@@ -15,7 +15,7 @@
     "url": "https://github.com/jas-/libzmap/issues"
   },
   "scripts": {
-		"install": "node-gyp rebuild",
+    "install": "node-gyp rebuild",
     "start": "node index.js",
     "test": "make test"
   },
@@ -24,5 +24,8 @@
     "chai": "~1.8.1"
   },
   "license": "Apache 2.0",
-  "engine": "node >= v0.10.30"
+  "engine": "node >= v0.10.30",
+  "dependencies": {
+    "nan": "^1.3.0"
+  }
 }
