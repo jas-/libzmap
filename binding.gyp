@@ -56,7 +56,9 @@
 			"zmap",
 		],
 		"sources": [
-			"src/libzmap.c",
+			"src/scan.cc",
+			"src/async.cc",
+			"src/libzmap.cc",
 		],
 		"conditions": [
 			['OS=="linux"', {
@@ -65,10 +67,9 @@
 					"-pedantic -fno-strict-aliasing",
 					"-Wextra",
 					"-Wfloat-equal -Wundef -Wwrite-strings -Wredundant-decls",
-					"-Wnested-externs -Wbad-function-cast -Winit-self",
+					" -Winit-self",
 					"-Wmissing-noreturn",
 					"-Wstack-protector",
-					"-std=gnu99",
           "-U_FORTIFY_SOURCE",
           "-D_FORTIFY_SOURCE=2",
           "-fstack-protector-all",

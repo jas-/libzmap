@@ -29,6 +29,7 @@ using v8::Number;
 using v8::Value;
 using v8::Handle;
 using v8::Object;
+using v8::String;
 
 class ScanWorker : public NanAsyncWorker {
  public:
@@ -45,7 +46,7 @@ class ScanWorker : public NanAsyncWorker {
 
     Local<Value> argv[] = {
         NanNull()
-      , NanNew<Object>(scan)
+      , NanNew<v8::Object>(scan)
     };
 
     callback->Call(2, argv);
@@ -56,11 +57,15 @@ class ScanWorker : public NanAsyncWorker {
 
     Local<Value> argv[] = {
         NanNull()
-      , NanNew<String>('An error occured during scan')
+      , NanNew<v8::String>('An error occured during scan')
     };
 
     callback->Call(1, argv);
   }
+
+	private:
+		Local<Object> scan;
+		Local<Object> args;
 };
 
 NAN_METHOD(AsyncScan) {
