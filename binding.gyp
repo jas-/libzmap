@@ -5,6 +5,8 @@
 		"type": "static_library",
 		"include_dirs": [
 			"src/zmap-1.2.1/lib",
+			"src/zmap-1.2.1/src",
+			"src/zmap-1.2.1/src/output_modules",
 	  ],
 		"conditions": [
 			['OS=="linux"', {
@@ -25,12 +27,24 @@
           "--param ssp-buffer-size=1",
           "-O2",
 				],
-				"ldflags": [
-          "-pthread",
-        ]
+				"link_settings": {
+					"libraries": [
+	          "-pthread",
+						"-lpcap",
+						"-lgmp",
+						"-lm"
+	        ]
+				},
 			}]
 		],
 		"sources": [
+			"src/zmap-1.2.1/lib/blacklist.c",
+			"src/zmap-1.2.1/lib/constraint.c",
+			"src/zmap-1.2.1/lib/logger.c",
+			"src/zmap-1.2.1/lib/pbm.c",
+			"src/zmap-1.2.1/lib/random.c",
+			"src/zmap-1.2.1/lib/rijndael-alg-fst.c",
+			"src/zmap-1.2.1/lib/xalloc.c",
 			"src/zmap-1.2.1/src/aesrand.c",
 			"src/zmap-1.2.1/src/cyclic.c",
 			"src/zmap-1.2.1/src/expression.c",
