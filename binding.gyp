@@ -3,6 +3,11 @@
 	[{
 		"target_name": "zmap",
 		"type": "static_library",
+		"variables": {
+			'path': 'src/zmap-1.2.1',
+			'lexer': '<!(flex -o "src/zmap-1.2.1/src/lexer.c" --header-file="src/zmap-1.2.1/src/lexer.h" "src/zmap-1.2.1/src/lexer.l")',
+			'parser': '<!(byacc -d -o "src/zmap-1.2.1/src/parser.c" "src/zmap-1.2.1/src/parser.y")',
+		},
 		"include_dirs": [
 			"src/zmap-1.2.1/lib",
 			"src/zmap-1.2.1/src",
@@ -61,6 +66,13 @@
 			"src/zmap-1.2.1/src/validate.c",
 			"src/zmap-1.2.1/src/zopt.c",
 			"src/zmap-1.2.1/src/zmap.c",
+			"src/zmap-1.2.1/src/output_modules/module_csv.c",
+			"src/zmap-1.2.1/src/output_modules/output_modules.c",
+			"src/zmap-1.2.1/src/probe_modules/module_icmp_echo.c",
+			"src/zmap-1.2.1/src/probe_modules/module_tcp_synscan.c",
+			"src/zmap-1.2.1/src/probe_modules/module_udp.c",
+			"src/zmap-1.2.1/src/probe_modules/packet.c",
+			"src/zmap-1.2.1/src/probe_modules/probe_modules.c"
 		]
 	},
 	{
