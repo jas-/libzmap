@@ -17,4 +17,46 @@
  * SUCH DAMAGE.
  */
 
-void Scan (int argc, char* argv[]);
+/*
+ * options for zmap
+ * See https://zmap.io/documentation.html#args
+ */
+typedef struct options
+{
+	// common
+	int port;
+	char* out;
+	char* blacklist;
+
+	// scan
+	int max_targets;
+	int max_results;
+	int max_runtime;
+	int rate;
+	int bandwidth;
+	char* bandwith_size;
+	int cooldown;
+	int seed;
+	int shard;
+	int shards;
+	int sender_threads;
+	int probes;
+	int dry_run;
+
+	// network
+	char* source_port;
+	char* source_ip;
+	char* gateway_mac;
+	char* interface;
+
+	// probe
+	int list_probe_modules;
+	char* probe_module;
+	char* probe_module_args;
+	int list_probe_module_fields;
+
+	// output
+
+} options;
+
+void Scan (options& argv);

@@ -52,17 +52,6 @@ class ScanWorker : public NanAsyncWorker {
     callback->Call(2, argv);
   }
 
-  void HandleErrorCallback () {
-    NanScope();
-
-    Local<Value> argv[] = {
-        NanNull()
-      , NanNew<v8::String>('An error occured during scan')
-    };
-
-    callback->Call(1, argv);
-  }
-
 	private:
 		Local<Object> scan;
 		Local<Object> args;
@@ -72,11 +61,11 @@ NAN_METHOD(AsyncScan) {
   NanScope();
 
 	if (args.Length() < 2) {
-		return NanThrowTypeError("An object & callback funciton required");
+		return NanThrowTypeError("An object & callback function required");
 	}
 
   NanCallback *callback = new NanCallback(args[0].As<Function>());
-	Local<Object> args = args[1].As<v8::Object>();
+	Local<Object> obj = args[1].As<Object>();
 
   NanAsyncQueueWorker(new ScanWorker(callback, args));
   NanReturnUndefined();
