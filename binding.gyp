@@ -69,6 +69,12 @@
 		"dependencies": [
 			"zmap",
 		],
+		"include_dirs" : [
+			"<!(node -e \"require('nan')\")",
+			"src/zmap-1.2.1/lib",
+			"src/zmap-1.2.1/src",
+			"src/zmap-1.2.1/src/output_modules",
+		],
 		"sources": [
 			"src/libzmap.c",
 		],
@@ -91,13 +97,15 @@
           "--param ssp-buffer-size=1",
           "-O2",
 				],
-				"ldflags": [
-          "-pthread",
-        ]
+				"link_settings": {
+					"libraries": [
+	          "-pthread",
+						"-lpcap",
+						"-lgmp",
+						"-lm"
+	        ]
+				},
 			}]
-		],
-		"include_dirs" : [
-			"<!(node -e \"require('nan')\")"
 		],
 	}],
 }
