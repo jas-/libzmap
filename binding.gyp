@@ -4,13 +4,13 @@
     "type": "static_library",
     "variables": {
       'path': 'src/zmap-1.2.1',
-      'lexer': '<!(flex -o "src/zmap-1.2.1/src/lexer.c" --header-file="src/zmap-1.2.1/src/lexer.h" "src/zmap-1.2.1/src/lexer.l")',
-      'parser': '<!(byacc -d -o "src/zmap-1.2.1/src/parser.c" "src/zmap-1.2.1/src/parser.y")',
+      'lexer': '<!(flex -o "<(path)/src/lexer.c" --header-file="<(path)/src/lexer.h" "<(path)/src/lexer.l")',
+      'parser': '<!(byacc -d -o "<(path)/src/parser.c" "<(path)/src/parser.y")',
     },
     "include_dirs": [
-      "src/zmap-1.2.1/lib",
-      "src/zmap-1.2.1/src",
-      "src/zmap-1.2.1/src/output_modules",
+      "<(path)/lib",
+      "<(path)/src",
+      "<(path)/src/output_modules",
     ],
     "conditions": [
       ['OS=="linux"', {
