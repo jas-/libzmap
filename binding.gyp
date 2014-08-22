@@ -3,7 +3,9 @@
     "target_name": "zmap",
     "type": "shared_library",
     "variables": {
+			'cwd': '<!(pwd)',
       'path': 'src/zmap-1.2.1',
+			'ld': '<!(export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:<(cwd)/build/Release)',
       'lexer': '<!(flex -o"<(path)/src/lexer.c" --header-file="<(path)/src/lexer.h" "<(path)/src/lexer.l")',
       'parser': '<!(byacc -d -o "<(path)/src/parser.c" "<(path)/src/parser.y")',
     },
@@ -121,14 +123,6 @@
           "--param ssp-buffer-size=1",
           "-O2",
         ],
-        "link_settings": {
-          "libraries": [
-            "-pthread",
-            "-lpcap",
-            "-lgmp",
-            "-lm",
-          ]
-        },
       }]
     ],
   }],
