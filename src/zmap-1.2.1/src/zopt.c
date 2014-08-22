@@ -23,7 +23,7 @@
 
 #include <getopt.h>
 
-#include "/home/jas/software/zmap-1.2.1/src/zopt.h"
+#include "zopt.h"
 
 const char *gengetopt_args_info_purpose = "A fast Internet-wide scanner.";
 
