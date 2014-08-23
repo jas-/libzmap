@@ -3,9 +3,7 @@
     "target_name": "zmap",
     "type": "shared_library",
     "variables": {
-			'cwd': '<!(pwd)',
       'path': 'src/zmap-1.2.1',
-			'ld': '<!(export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:<(cwd)/build/Release)',
       'lexer': '<!(flex -o"<(path)/src/lexer.c" --header-file="<(path)/src/lexer.h" "<(path)/src/lexer.l")',
       'parser': '<!(byacc -d -o "<(path)/src/parser.c" "<(path)/src/parser.y")',
     },
@@ -87,11 +85,16 @@
   {
     "target_name": "libzmap",
     "type": "loadable_module",
+    "variables": {
+			'cwd': '<!(pwd)',
+			'ld': '<!(export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:<(cwd)/build/Release)',
+    },
     "dependencies": [
       "zmap",
     ],
     "include_dirs": [
       "<!(node -e \"require('nan')\")",
+      "<(ld)"
     ],
     "sources": [
       "src/libzmap.c",
@@ -123,6 +126,16 @@
           "--param ssp-buffer-size=1",
           "-O2",
         ],
+        "link_settings": {
+          "libraries": [
+            "-l<(cwd)/build/Release/obj.target/zmap.so",
+            "-pthread",
+            "-lpcap",
+            "-lgmp",
+            "-lfl",
+            "-lm"
+          ]
+        },
       }]
     ],
   }],
