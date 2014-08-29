@@ -46,7 +46,6 @@
 			"src/zmap-1.2.1/src/recv.c",
 			"src/zmap-1.2.1/src/validate.c",
 			"src/zmap-1.2.1/src/zopt.c",
-			"src/zmap-1.2.1/src/zmap.c",
 		]
 	},
 	{
@@ -56,8 +55,6 @@
 			"zmap",
 		],
 		"sources": [
-			"src/scan.cc",
-			"src/async.cc",
 			"src/libzmap.cc",
 		],
 		"conditions": [

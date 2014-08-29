@@ -1,35 +1,26 @@
-/*
- * libzmap
- *
- * Copyright 2014 Jason Gerfen
- * All rights reserved.
- *
- * THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED. IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
- */
-
 #include <node.h>
 #include <nan.h>
 
-#include "./libzmap.h"
+#include "libzmap.h"
 
-using v8::FunctionTemplate;
-using v8::Handle;
-using v8::Object;
-using v8::String;
+using namespace v8;
 
-void InitLibzmap(Handle<Object> exports) {
-  exports->Set(NanNew<String>("AsyncScan"),
-    NanNew<FunctionTemplate>(AsyncScan)->GetFunction());
+namespace libzmap {
+
+NAN_METHOD(LibZMAP) {
+	NanScope();
+
+  NanReturnValue(NanNew<String>("hello world"));
 }
 
-NODE_MODULE(libzmap, InitLibzmap)
+void Init (v8::Handle<v8::Object> target) {
+
+	v8::Local<v8::Function> libzmap =
+		NanNew<v8::FunctionTemplate>(LibZMAP)->GetFunction();
+
+	target->Set(NanNew("libzmap"), libzmap);
+}
+
+NODE_MODULE(libzmap, Init)
+
+} // namespace libzmap
