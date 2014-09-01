@@ -1,26 +1,30 @@
 #include <node.h>
-#include <nan.h>
+#include <v8.h>
 
 #include "libzmap.h"
 
-using namespace v8;
-
 namespace libzmap {
 
-NAN_METHOD(LibZMAP) {
-	NanScope();
+using namespace node;
+using namespace v8;
 
-  NanReturnValue(NanNew<String>("hello world"));
+Handle<Value> LibZMAP(const Arguments& args) {
+  HandleScope scope;
+
+  Local<Object> obj = Object::New();
+  obj->Set(String::NewSymbol("x"), String::New("hello"));
+  obj->Set(String::NewSymbol("y"), String::New("world"));
+
+  return scope.Close(obj);
 }
 
-void Init (v8::Handle<v8::Object> target) {
-
-	v8::Local<v8::Function> libzmap =
-		NanNew<v8::FunctionTemplate>(LibZMAP)->GetFunction();
-
-	target->Set(NanNew("libzmap"), libzmap);
+void Init (Handle<Object> exports) {
+  exports->Set(String::NewSymbol("libzmap"),
+    FunctionTemplate::New(LibZMAP)->GetFunction());
 }
 
-NODE_MODULE(libzmap, Init)
+extern "C" {
+  NODE_MODULE(libzmap, Init)
+}
 
 } // namespace libzmap

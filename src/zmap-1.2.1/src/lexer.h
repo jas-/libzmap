@@ -2,9 +2,9 @@
 #define yyHEADER_H 1
 #define yyIN_HEADER 1
 
-#line 6 "/home/jas/software/zmap-1.2.1/src/lexer.h"
+#line 6 "src/zmap-1.2.1/src/lexer.h"
 
-#line 8 "/home/jas/software/zmap-1.2.1/src/lexer.h"
+#line 8 "src/zmap-1.2.1/src/lexer.h"
 
 #define  YY_INT_ALIGNED short int
 
@@ -311,9 +311,9 @@ extern int yylex (void);
 #undef YY_DECL
 #endif
 
-#line 28 "/home/jas/software/zmap-1.2.1/src/lexer.l"
+#line 28 "src/zmap-1.2.1/src/lexer.l"
 
 
-#line 318 "/home/jas/software/zmap-1.2.1/src/lexer.h"
+#line 318 "src/zmap-1.2.1/src/lexer.h"
 #undef yyIN_HEADER
 #endif /* yyHEADER_H */

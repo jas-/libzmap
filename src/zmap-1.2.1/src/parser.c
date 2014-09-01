@@ -19,7 +19,7 @@ extern int yyparse(void);
 
 static int yygrowstack(void);
 #define YYPREFIX "yy"
-#line 2 "/home/jas/software/zmap-1.2.1/src/parser.y"
+#line 2 "src/zmap-1.2.1/src/parser.y"
 #include <stdio.h>
 #include <string.h>
 #include "expression.h"
@@ -38,13 +38,13 @@ int yywrap()
 
 extern node_t *zfilter;
 
-#line 22 "/home/jas/software/zmap-1.2.1/src/parser.y"
+#line 22 "src/zmap-1.2.1/src/parser.y"
 typedef union {
 	int int_literal;
 	char *string_literal;
 	struct node *expr; 
 } YYSTYPE;
-#line 48 "/home/jas/software/zmap-1.2.1/src/parser.c"
+#line 48 "src/zmap-1.2.1/src/parser.c"
 #define T_AND 257
 #define T_OR 258
 #define T_NUMBER 259
@@ -207,10 +207,10 @@ static short   *yyss;
 static short   *yysslim;
 static YYSTYPE *yyvs;
 static int      yystacksize;
-#line 143 "/home/jas/software/zmap-1.2.1/src/parser.y"
+#line 143 "src/zmap-1.2.1/src/parser.y"
 
 
-#line 214 "/home/jas/software/zmap-1.2.1/src/parser.c"
+#line 214 "src/zmap-1.2.1/src/parser.c"
 /* allocate initial stack or double stack size, up to YYMAXDEPTH */
 static int yygrowstack(void)
 {
@@ -392,13 +392,13 @@ yyreduce:
     switch (yyn)
     {
 case 1:
-#line 45 "/home/jas/software/zmap-1.2.1/src/parser.y"
+#line 45 "src/zmap-1.2.1/src/parser.y"
 {
 		zfilter = yyvsp[0].expr;
 	}
 break;
 case 2:
-#line 52 "/home/jas/software/zmap-1.2.1/src/parser.y"
+#line 52 "src/zmap-1.2.1/src/parser.y"
 {
 			yyval.expr = make_op_node(OR);
 			yyval.expr->left_child = yyvsp[-2].expr;
@@ -406,7 +406,7 @@ case 2:
 		}
 break;
 case 3:
-#line 58 "/home/jas/software/zmap-1.2.1/src/parser.y"
+#line 58 "src/zmap-1.2.1/src/parser.y"
 {
 			yyval.expr = make_op_node(AND);
 			yyval.expr->left_child = yyvsp[-2].expr;
@@ -414,31 +414,31 @@ case 3:
 		}
 break;
 case 4:
-#line 64 "/home/jas/software/zmap-1.2.1/src/parser.y"
+#line 64 "src/zmap-1.2.1/src/parser.y"
 {
 			yyval.expr = yyvsp[-1].expr;
 		}
 break;
 case 5:
-#line 68 "/home/jas/software/zmap-1.2.1/src/parser.y"
+#line 68 "src/zmap-1.2.1/src/parser.y"
 {
 			yyval.expr = yyvsp[0].expr;
 		}
 break;
 case 6:
-#line 74 "/home/jas/software/zmap-1.2.1/src/parser.y"
+#line 74 "src/zmap-1.2.1/src/parser.y"
 {
 			yyval.expr = yyvsp[0].expr;
 		}
 break;
 case 7:
-#line 78 "/home/jas/software/zmap-1.2.1/src/parser.y"
+#line 78 "src/zmap-1.2.1/src/parser.y"
 {
 			yyval.expr = yyvsp[0].expr;
 		}
 break;
 case 8:
-#line 84 "/home/jas/software/zmap-1.2.1/src/parser.y"
+#line 84 "src/zmap-1.2.1/src/parser.y"
 {
 			yyval.expr = make_op_node(EQ);
 			yyval.expr->left_child = make_field_node(yyvsp[-2].string_literal);
@@ -446,7 +446,7 @@ case 8:
 		}
 break;
 case 9:
-#line 91 "/home/jas/software/zmap-1.2.1/src/parser.y"
+#line 91 "src/zmap-1.2.1/src/parser.y"
 {
 			yyval.expr = make_op_node(GT);
 			yyval.expr->left_child = make_field_node(yyvsp[-2].string_literal);
@@ -454,7 +454,7 @@ case 9:
 		}
 break;
 case 10:
-#line 98 "/home/jas/software/zmap-1.2.1/src/parser.y"
+#line 98 "src/zmap-1.2.1/src/parser.y"
 {
 			yyval.expr = make_op_node(LT);
 			yyval.expr->left_child = make_field_node(yyvsp[-2].string_literal);
@@ -462,7 +462,7 @@ case 10:
 		}
 break;
 case 11:
-#line 105 "/home/jas/software/zmap-1.2.1/src/parser.y"
+#line 105 "src/zmap-1.2.1/src/parser.y"
 {
 			yyval.expr = make_op_node(NEQ);
 			yyval.expr->left_child = make_field_node(yyvsp[-2].string_literal);
@@ -470,7 +470,7 @@ case 11:
 		}
 break;
 case 12:
-#line 112 "/home/jas/software/zmap-1.2.1/src/parser.y"
+#line 112 "src/zmap-1.2.1/src/parser.y"
 {
 			yyval.expr = make_op_node(GT_EQ);
 			yyval.expr->left_child = make_field_node(yyvsp[-2].string_literal);
@@ -478,7 +478,7 @@ case 12:
 		}
 break;
 case 13:
-#line 119 "/home/jas/software/zmap-1.2.1/src/parser.y"
+#line 119 "src/zmap-1.2.1/src/parser.y"
 {
 			yyval.expr = make_op_node(LT_EQ);
 			yyval.expr->left_child = make_field_node(yyvsp[-2].string_literal);
@@ -486,7 +486,7 @@ case 13:
 		}
 break;
 case 14:
-#line 128 "/home/jas/software/zmap-1.2.1/src/parser.y"
+#line 128 "src/zmap-1.2.1/src/parser.y"
 {
 			yyval.expr = make_op_node(EQ);
 			yyval.expr->left_child = make_field_node(yyvsp[-2].string_literal);
@@ -494,14 +494,14 @@ case 14:
 		}
 break;
 case 15:
-#line 135 "/home/jas/software/zmap-1.2.1/src/parser.y"
+#line 135 "src/zmap-1.2.1/src/parser.y"
 {
 			yyval.expr = make_op_node(NEQ);
 			yyval.expr->left_child = make_field_node(yyvsp[-2].string_literal);
 			yyval.expr->right_child = make_string_node(yyvsp[0].string_literal);
 		}
 break;
-#line 505 "/home/jas/software/zmap-1.2.1/src/parser.c"
+#line 505 "src/zmap-1.2.1/src/parser.c"
     }
     yyssp -= yym;
     yystate = *yyssp;
