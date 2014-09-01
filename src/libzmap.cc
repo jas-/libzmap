@@ -19,12 +19,12 @@ Handle<Value> LibZMAP(const Arguments& args) {
 }
 
 void Init (Handle<Object> exports) {
-  exports->Set(String::NewSymbol("libzmap"),
+  exports->Set(String::NewSymbol("zmap"),
     FunctionTemplate::New(LibZMAP)->GetFunction());
 }
 
 extern "C" {
-  NODE_MODULE(libzmap, Init)
+  NODE_MODULE(zmap, Init)
 }
 
 } // namespace libzmap

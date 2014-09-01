@@ -70,6 +70,7 @@
       "<(path)/src/iterator.c",
       "<(path)/src/lexer.c",
       "<(path)/src/monitor.c",
+      "<(path)/src/parser.c",
       "<(path)/src/send.c",
       "<(path)/src/shard.c",
       "<(path)/src/state.c",
