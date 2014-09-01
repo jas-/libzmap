@@ -17,7 +17,7 @@ Handle<Value> LibZMAP(const Arguments& args) {
   Local<Object> obj;
 
   if (args.Length() < 1) {
-    ThrowException(Exception::TypeError(String::New("Wrong number of arguments")));
+    ThrowException(Exception::TypeError(String::New("Arguments invalid")));
     return scope.Close(Undefined());
   }
 
@@ -25,14 +25,14 @@ Handle<Value> LibZMAP(const Arguments& args) {
     callback = Local<Function>::Cast(args[0]);
   } else {
     if (!args[1]->IsFunction()) {
-      ThrowException(Exception::TypeError(String::New("Function expected as second argument")));
+      ThrowException(Exception::TypeError(String::New("Function expected")));
       return scope.Close(Undefined());
     }
 
     callback = Local<Function>::Cast(args[1]);
 
     if (!args[0]->IsObject()) {
-      ThrowException(Exception::TypeError(String::New("Object expected as first argument")));
+      ThrowException(Exception::TypeError(String::New("Object expected")));
       return scope.Close(Undefined());
     }
   }
