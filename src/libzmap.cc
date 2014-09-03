@@ -39,8 +39,8 @@ Handle<Value> LibZMAP(const Arguments& args) {
     obj = args[0]->ToObject();
   }
 
-  if (obj->Has(v8::String::NewSymbol("blacklist_file"))) {
-    Handle<v8::Value> value = obj->Get(String::New("blacklist_file"));
+  if (obj->Has(v8::String::NewSymbol("blacklist"))) {
+    Handle<v8::Value> value = obj->Get(String::New("blacklist"));
     return scope.Close(value);
   }
 
