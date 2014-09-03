@@ -1,9 +1,7 @@
 #include <node.h>
 #include <v8.h>
 
-#include "zmap-1.2.1/src/zopt.h"
-
-#include "libzmap.h"
+#include "zmap-1.2.1/src/state.h"
 
 namespace libzmap {
 
@@ -12,20 +10,6 @@ using namespace v8;
 
 Handle<Value> LibZMAP(const Arguments& args) {
   HandleScope scope;
-
-  struct gengetopt_args_info argv;
-  struct cmdline_parser_params *params;
-  params = cmdline_parser_params_create();
-  params->initialize = 1;
-  params->override = 0;
-  params->check_required = 0;
-
-  int config_loaded = 0;
-
-  if (cmdline_parser_ext(args.Length(), args[0], &argv, params) != 0) {
-    ThrowException(Exception::TypeError(String::New("cmdline_parser_ext met")));
-    //exit(EXIT_SUCCESS);
-  }
 
   Local<Function> callback;
   Local<Object> obj;
@@ -53,6 +37,11 @@ Handle<Value> LibZMAP(const Arguments& args) {
 
   if (args[0]->IsObject()) {
     obj = args[0]->ToObject();
+  }
+
+  if (obj->Has(v8::String::NewSymbol("blacklist_file"))) {
+    Handle<v8::Value> value = obj->Get(String::New("blacklist_file"));
+    return scope.Close(value);
   }
 
   return scope.Close(obj);

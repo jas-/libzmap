@@ -30,7 +30,7 @@ void yyerror(const char *str)
 {
 	fprintf(stderr,"Parse error: %s\n",str);
 }
- 
+
 int yywrap()
 {
 	return 1;
@@ -42,7 +42,7 @@ extern node_t *zfilter;
 typedef union {
 	int int_literal;
 	char *string_literal;
-	struct node *expr; 
+	struct node_struct *expr;
 } YYSTYPE;
 #line 48 "src/zmap-1.2.1/src/parser.c"
 #define T_AND 257
@@ -207,10 +207,6 @@ static short   *yyss;
 static short   *yysslim;
 static YYSTYPE *yyvs;
 static int      yystacksize;
-#line 143 "src/zmap-1.2.1/src/parser.y"
-
-
-#line 214 "src/zmap-1.2.1/src/parser.c"
 /* allocate initial stack or double stack size, up to YYMAXDEPTH */
 static int yygrowstack(void)
 {
@@ -501,7 +497,7 @@ case 15:
 			yyval.expr->right_child = make_string_node(yyvsp[0].string_literal);
 		}
 break;
-#line 505 "src/zmap-1.2.1/src/parser.c"
+#line 501 "src/zmap-1.2.1/src/parser.c"
     }
     yyssp -= yym;
     yystate = *yyssp;

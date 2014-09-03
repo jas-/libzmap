@@ -9,7 +9,7 @@ void yyerror(const char *str)
 {
 	fprintf(stderr,"Parse error: %s\n",str);
 }
- 
+
 int yywrap()
 {
 	return 1;
@@ -22,7 +22,7 @@ extern node_t *zfilter;
 %union {
 	int int_literal;
 	char *string_literal;
-	struct node *expr; 
+	struct node_struct *expr;
 }
 
 %token '(' ')' T_AND T_OR
@@ -70,7 +70,7 @@ filter_expr:
 		}
 	;
 
-filter: number_filter 
+filter: number_filter
 		{
 			$$ = $1;
 		}
@@ -85,8 +85,8 @@ number_filter: T_FIELD '=' T_NUMBER
 			$$ = make_op_node(EQ);
 			$$->left_child = make_field_node($1);
 			$$->right_child = make_int_node($3);
-		}	
-	| 
+		}
+	|
 	T_FIELD '>' T_NUMBER
 		{
 			$$ = make_op_node(GT);
@@ -140,5 +140,3 @@ string_filter:
 	;
 
 %%
-
-

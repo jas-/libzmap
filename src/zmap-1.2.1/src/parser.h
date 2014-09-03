@@ -8,6 +8,6 @@
 typedef union {
 	int int_literal;
 	char *string_literal;
-	struct node *expr; 
+	struct node_struct *expr;
 } YYSTYPE;
 extern YYSTYPE yylval;
