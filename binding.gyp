@@ -132,6 +132,8 @@
 			"zmap",
 		],
 		"sources": [
+			"src/config.cc",
+			"src/async.cc",
 			"src/libzmap.cc",
 		],
     "libraries":[
@@ -168,7 +170,6 @@
           "-fstack-protector-all",
           "-fwrapv",
           "-fPIC",
-          "--param ssp-buffer-size=1",
           "-O2",
         ],
         "link_settings": {
