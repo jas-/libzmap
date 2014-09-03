@@ -1,11 +1,4 @@
 {
-<<<<<<< HEAD
-  "targets": [{
-    "target_name": "zmap",
-    "type": "shared_library",
-    "variables": {
-      'path': 'src/zmap-1.2.1',
-=======
 	"targets":
 	[{
 		"target_name": "zmap",
@@ -14,7 +7,6 @@
       'cwd': '<!(pwd)',
       'path': 'src/zmap-1.2.1',
       'ld': '<!(export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:<(cwd)/build/Release)',
->>>>>>> development
       'lexer': '<!(flex -o"<(path)/src/lexer.c" --header-file="<(path)/src/lexer.h" "<(path)/src/lexer.l")',
       'parser': '<!(byacc -d -o "<(path)/src/parser.c" "<(path)/src/parser.y")',
     },
@@ -78,10 +70,7 @@
       "<(path)/src/iterator.c",
       "<(path)/src/lexer.c",
       "<(path)/src/monitor.c",
-<<<<<<< HEAD
-=======
       "<(path)/src/parser.c",
->>>>>>> development
       "<(path)/src/send.c",
       "<(path)/src/shard.c",
       "<(path)/src/state.c",
@@ -98,25 +87,6 @@
     ]
   },
   {
-<<<<<<< HEAD
-    "target_name": "libzmap",
-    "type": "loadable_module",
-    "variables": {
-			'cwd': '<!(pwd)',
-			'ld': '<!(export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:<(cwd)/build/Release)',
-    },
-    "dependencies": [
-      "zmap",
-    ],
-    "include_dirs": [
-      "<!(node -e \"require('nan')\")",
-      "<(ld)"
-    ],
-    "sources": [
-      "src/libzmap.c",
-    ],
-    "conditions": [
-=======
 		"target_name": "libzmap",
 		"type": "loadable_module",
     "variables": {
@@ -140,7 +110,6 @@
       "<(cwd)/<(ldpath)/zmap.so"
     ],
 		"conditions": [
->>>>>>> development
       ['OS=="linux"', {
         "cflags": [
           "-Wall",
@@ -153,36 +122,23 @@
           "-Wundef",
           "-Wwrite-strings",
           "-Wredundant-decls",
-<<<<<<< HEAD
-          "-Wnested-externs",
-          "-Wbad-function-cast",
           "-Winit-self",
           "-Wmissing-noreturn",
           "-Wstack-protector",
-          "-std=gnu99",
-=======
-          "-Winit-self",
-          "-Wmissing-noreturn",
-          "-Wstack-protector",
->>>>>>> development
           "-U_FORTIFY_SOURCE",
           "-D_FORTIFY_SOURCE=2",
           "-fstack-protector-all",
           "-fwrapv",
           "-fPIC",
           "-O2",
-        ],
-        "link_settings": {
-          "libraries": [
-            "-l<(cwd)/build/Release/obj.target/zmap.so",
-            "-pthread",
-            "-lpcap",
-            "-lgmp",
-            "-lfl",
-            "-lm"
-          ]
-        },
-      }]
-    ],
-  }],
+				],
+				"ldflags": [
+          "-pthread",
+        ]
+			}]
+		],
+		"include_dirs" : [
+			"<!(node -e \"require('nan')\")"
+		],
+	}],
 }
