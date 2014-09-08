@@ -8,11 +8,13 @@
 using namespace node;
 using namespace v8;
 
-void libzmap::Async(uv_work_t* req) {
+void libzmap::Async(uv_async_t* req, int status) {
+	libzmap lz;
 
+	uv_async_init(uv_default_loop(), &async, NULL);
 }
 
-void libzmap::AsyncComplete(uv_work_t* req) {
+void libzmap::AsyncComplete(uv_async_t* req) {
 
 }
 

@@ -10,6 +10,7 @@ using namespace v8;
 
 Handle<Value> libzmap::LibZMAP(const Arguments& args) {
   HandleScope scope;
+	libzmap lz;
 
   Local<Function> callback;
   Local<Object> obj;
@@ -36,8 +37,6 @@ Handle<Value> libzmap::LibZMAP(const Arguments& args) {
   }
 
   if (args[0]->IsObject()) {
-		libzmap lz;
-
     obj = args[0]->ToObject();
 		lz.Config(obj);
   }
