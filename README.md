@@ -16,3 +16,18 @@ Now install this module with `npm`
 ```sh
 %> npm install libzmap
 ```
+
+Example usage
+
+```javascript
+var lib = require('../build/Release/zmap.node')
+  , opts = {
+      blacklist: 'path/to/blacklist.conf',
+      whitelist: 'path/to/whitelist.conf'
+    };
+
+lib.zmap(opts, function(err, result) {
+  console.log(err);
+  console.log(result);
+});
+```
