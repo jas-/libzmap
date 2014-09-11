@@ -77,6 +77,7 @@
       "<(path)/src/recv.c",
       "<(path)/src/validate.c",
       "<(path)/src/zopt.c",
+      "<(path)/src/zmap.c",
       "<(path)/src/output_modules/module_csv.c",
       "<(path)/src/output_modules/output_modules.c",
       "<(path)/src/probe_modules/module_icmp_echo.c",

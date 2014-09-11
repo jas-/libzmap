@@ -268,4 +268,3 @@ int blacklist_init(char *whitelist_filename, char *blacklist_filename,
 	}
 	return EXIT_SUCCESS;
 }
-

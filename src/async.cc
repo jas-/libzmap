@@ -9,12 +9,12 @@ using namespace node;
 using namespace v8;
 
 void libzmap::Async(uv_async_t* req, int status) {
-	libzmap lz;
+	//thread_comm_t comm;
 
-	uv_async_init(uv_default_loop(), &async, NULL);
+	//uv_async_init(uv_default_loop(), &comm.async, AsyncCallback);
 }
 
-void libzmap::AsyncComplete(uv_async_t* req) {
+void libzmap::AsyncCallback(uv_async_t* req, int status) {
 
 }
 
