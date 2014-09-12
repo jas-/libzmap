@@ -5,54 +5,54 @@
 #include "./libzmap.h"
 
 extern "C" {
-	#include "zmap-1.2.1/lib/logger.h"
-	#include "zmap-1.2.1/lib/xalloc.h"
-	#include "zmap-1.2.1/lib/blacklist.h"
+#include "zmap-1.2.1/lib/logger.h"
+#include "zmap-1.2.1/lib/xalloc.h"
+#include "zmap-1.2.1/lib/blacklist.h"
 
-	#include "zmap-1.2.1/src/types.h"
-	#include "zmap-1.2.1/src/aesrand.h"
-	#include "zmap-1.2.1/src/zopt.h"
-	#include "zmap-1.2.1/src/state.h"
-	#include "zmap-1.2.1/src/get_gateway.h"
+#include "zmap-1.2.1/src/types.h"
+#include "zmap-1.2.1/src/aesrand.h"
+#include "zmap-1.2.1/src/zopt.h"
+#include "zmap-1.2.1/src/state.h"
+#include "zmap-1.2.1/src/get_gateway.h"
 }
 
 using namespace node;
 using namespace v8;
 
 Handle<Value> libzmap::LibZMAP(const Arguments& args) {
-  HandleScope scope;
+	HandleScope scope;
 	libzmap lz;
 
-  Local<Function> callback;
-  Local<Object> obj;
+	Local<Function> callback;
+	Local<Object> obj;
 
-  if (args.Length() < 1) {
-    ThrowException(Exception::TypeError(String::New("Arguments invalid")));
-    return scope.Close(Undefined());
-  }
+	if (args.Length() < 1) {
+		ThrowException(Exception::TypeError(String::New("Arguments invalid")));
+		return scope.Close(Undefined());
+	}
 
-  if (args[0]->IsFunction()) {
-    callback = Local<Function>::Cast(args[0]);
-  } else {
-    if (!args[1]->IsFunction()) {
-      ThrowException(Exception::TypeError(String::New("Function expected")));
-      return scope.Close(Undefined());
-    }
+	if (args[0]->IsFunction()) {
+		callback = Local<Function>::Cast(args[0]);
+	} else {
+		if (!args[1]->IsFunction()) {
+			ThrowException(Exception::TypeError(String::New("Function expected")));
+			return scope.Close(Undefined());
+		}
 
-    callback = Local<Function>::Cast(args[1]);
+		callback = Local<Function>::Cast(args[1]);
 
-    if (!args[0]->IsObject()) {
-      ThrowException(Exception::TypeError(String::New("Object expected")));
-      return scope.Close(Undefined());
-    }
-  }
+		if (!args[0]->IsObject()) {
+			ThrowException(Exception::TypeError(String::New("Object expected")));
+			return scope.Close(Undefined());
+		}
+	}
 
-  if (args[0]->IsObject()) {
-    obj = args[0]->ToObject();
+	if (args[0]->IsObject()) {
+		obj = args[0]->ToObject();
 		lz.Config(obj);
-  }
+	}
 
-  return scope.Close(obj);
+	return scope.Close(obj);
 }
 
 int libzmap::max(int a, int b) {
@@ -63,7 +63,7 @@ int libzmap::max(int a, int b) {
 }
 
 void libzmap::Config(Handle<Object> obj) {
-  HandleScope scope;
+	HandleScope scope;
 	libzmap lz;
 
 	lz.ConfigIface(obj);
@@ -80,28 +80,31 @@ void libzmap::Config(Handle<Object> obj) {
 	lz.ConfigCores();
 	lz.ConfigSeed();
 
+	/* init sending component */
+	/* start threads, use uv_async here vs. pthreads */
+	/* drop root privs */
+	/* async callback for completed workers */
+
 }
 
-/*
 void libzmap::ConfigLoglevel(Handle<Object> obj) {
 	HandleScope scope;
 
-  if (obj->Has(v8::String::NewSymbol("loglevel"))) {
-    Handle<v8::Value> value = obj->Get(String::New("loglevel"));
-    zconf.log_level = (char*) xmalloc(strlen(*v8::String::Utf8Value(value->ToString())) + 1);
-		strcpy(zconf.log_level, *v8::String::Utf8Value(value->ToString()));
-  }
+	if (obj->Has(v8::String::NewSymbol("loglevel"))) {
+		Handle<v8::Value> value = obj->Get(String::New("loglevel"));
+		zconf.log_level = (char*) xmalloc(strlen(*v8::String::Utf8Value(value->ToString())) + 1);
+		//		strcpy(zconf.log_level, *v8::String::Utf8Value(value->ToString()));
+	}
 	log_debug("loglevel", "%s", zconf.whitelist_filename);
 }
-*/
 
 void libzmap::ConfigIface(Handle<Object> obj) {
-  HandleScope scope;
+	HandleScope scope;
 
-  if (obj->Has(v8::String::NewSymbol("iface"))) {
-    Handle<v8::Value> value = obj->Get(String::New("iface"));
+	if (obj->Has(v8::String::NewSymbol("iface"))) {
+		Handle<v8::Value> value = obj->Get(String::New("iface"));
 		zconf.iface = (char*) xmalloc(strlen(*v8::String::Utf8Value(value->ToString())) + 1);
-    strcpy(zconf.iface, *v8::String::Utf8Value(value->ToString()));
+		strcpy(zconf.iface, *v8::String::Utf8Value(value->ToString()));
 	} else {
 		zconf.iface = get_default_iface();
 		assert(zconf.iface);
@@ -110,11 +113,11 @@ void libzmap::ConfigIface(Handle<Object> obj) {
 }
 
 void libzmap::ConfigIpaddr(Handle<Object> obj) {
-  HandleScope scope;
+	HandleScope scope;
 
-  if (obj->Has(v8::String::NewSymbol("ipaddr"))) {
-    Handle<v8::Value> value = obj->Get(String::New("ipaddr"));
-    zconf.source_ip_first = (char*) xmalloc(strlen(*v8::String::Utf8Value(value->ToString())) + 1);
+	if (obj->Has(v8::String::NewSymbol("ipaddr"))) {
+		Handle<v8::Value> value = obj->Get(String::New("ipaddr"));
+		zconf.source_ip_first = (char*) xmalloc(strlen(*v8::String::Utf8Value(value->ToString())) + 1);
 		strcpy(zconf.source_ip_first, *v8::String::Utf8Value(value->ToString()));
 
 		char *dash = strchr(zconf.source_ip_first, '-');
@@ -124,7 +127,7 @@ void libzmap::ConfigIpaddr(Handle<Object> obj) {
 			zconf.source_ip_last = dash+1;
 		}
 
-  } else {
+	} else {
 		struct in_addr default_ip;
 		zconf.source_ip_first = (char*) xmalloc(INET_ADDRSTRLEN);
 		zconf.source_ip_last = zconf.source_ip_first;
@@ -166,15 +169,15 @@ void libzmap::ConfigHwaddr(Handle<Object> obj) {
 	libzmap lz;
 	struct gengetopt_args_info args;
 
-  if (obj->Has(v8::String::NewSymbol("mac"))) {
-    Handle<v8::Value> value = obj->Get(String::New("mac"));
-    args.gateway_mac_arg = (char*) xmalloc(strlen(*v8::String::Utf8Value(value->ToString())) + 1);
+	if (obj->Has(v8::String::NewSymbol("mac"))) {
+		Handle<v8::Value> value = obj->Get(String::New("mac"));
+		args.gateway_mac_arg = (char*) xmalloc(strlen(*v8::String::Utf8Value(value->ToString())) + 1);
 		strcpy(args.gateway_mac_arg, *v8::String::Utf8Value(value->ToString()));
 		if (!lz.parse_mac(zconf.gw_mac, args.gateway_mac_arg)) {
 			log_error("zmap", "invalid MAC address `%s'\n", args.gateway_mac_arg);
 		}
 		zconf.gw_mac_set = 1;
-  } else {
+	} else {
 		struct in_addr gw_ip;
 		if (get_default_gw(&gw_ip, zconf.iface) < 0) {
 			log_fatal("zmap", "could not detect default gateway address for %s."
@@ -193,41 +196,41 @@ void libzmap::ConfigHwaddr(Handle<Object> obj) {
 		zconf.gw_mac_set = 1;
 	}
 	log_debug("mac", "%02x:%02x:%02x:%02x:%02x:%02x",
-		  zconf.gw_mac[0], zconf.gw_mac[1], zconf.gw_mac[2],
-		  zconf.gw_mac[3], zconf.gw_mac[4], zconf.gw_mac[5]);
+			zconf.gw_mac[0], zconf.gw_mac[1], zconf.gw_mac[2],
+			zconf.gw_mac[3], zconf.gw_mac[4], zconf.gw_mac[5]);
 }
 
 void libzmap::ConfigRange(Handle<Object> obj) {
 	HandleScope scope;
 
-  if (obj->Has(v8::String::NewSymbol("range"))) {
-    Handle<v8::Value> value = obj->Get(String::New("range"));
-    zconf.destination_cidrs = (char**) xmalloc(strlen(*v8::String::Utf8Value(value->ToString())) + 1);
+	if (obj->Has(v8::String::NewSymbol("range"))) {
+		Handle<v8::Value> value = obj->Get(String::New("range"));
+		zconf.destination_cidrs = (char**) xmalloc(strlen(*v8::String::Utf8Value(value->ToString())) + 1);
 		strcpy((char*) zconf.destination_cidrs, *v8::String::Utf8Value(value->ToString()));
 		zconf.destination_cidrs_len = strlen(*v8::String::Utf8Value(value->ToString()));
-  }
+	}
 	log_debug("range", "%s", zconf.destination_cidrs);
 }
 
 void libzmap::ConfigBlacklist(Handle<Object> obj) {
 	HandleScope scope;
 
-  if (obj->Has(v8::String::NewSymbol("blacklist"))) {
-    Handle<v8::Value> value = obj->Get(String::New("blacklist"));
-    zconf.blacklist_filename = (char*) xmalloc(strlen(*v8::String::Utf8Value(value->ToString())) + 1);
+	if (obj->Has(v8::String::NewSymbol("blacklist"))) {
+		Handle<v8::Value> value = obj->Get(String::New("blacklist"));
+		zconf.blacklist_filename = (char*) xmalloc(strlen(*v8::String::Utf8Value(value->ToString())) + 1);
 		strcpy(zconf.blacklist_filename, *v8::String::Utf8Value(value->ToString()));
-  }
+	}
 	log_debug("blacklist", "%s", zconf.blacklist_filename);
 }
 
 void libzmap::ConfigWhitelist(Handle<Object> obj) {
 	HandleScope scope;
 
-  if (obj->Has(v8::String::NewSymbol("whitelist"))) {
-    Handle<v8::Value> value = obj->Get(String::New("whitelist"));
-    zconf.whitelist_filename = (char*) xmalloc(strlen(*v8::String::Utf8Value(value->ToString())) + 1);
+	if (obj->Has(v8::String::NewSymbol("whitelist"))) {
+		Handle<v8::Value> value = obj->Get(String::New("whitelist"));
+		zconf.whitelist_filename = (char*) xmalloc(strlen(*v8::String::Utf8Value(value->ToString())) + 1);
 		strcpy(zconf.whitelist_filename, *v8::String::Utf8Value(value->ToString()));
-  }
+	}
 	log_debug("whitelist", "%s", zconf.whitelist_filename);
 }
 
@@ -235,8 +238,8 @@ void libzmap::ConfigWhiteBlackLists(void) {
 	HandleScope scope;
 
 	if (blacklist_init(zconf.whitelist_filename, zconf.blacklist_filename,
-			   zconf.destination_cidrs, zconf.destination_cidrs_len,
-			   NULL, 0)) {
+				zconf.destination_cidrs, zconf.destination_cidrs_len,
+				NULL, 0)) {
 		log_fatal("zmap", "unable to initialize blacklist / whitelist");
 	}
 }
