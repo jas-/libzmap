@@ -18,7 +18,8 @@
 #include "logger.h"
 #include "xalloc.h"
 
-static enum LogLevel log_output_level = ZLOG_INFO;
+static enum LogLevel log_output_level = ZLOG_DEBUG;
+//static enum LogLevel log_output_level = ZLOG_INFO;
 
 static FILE *log_output_stream = NULL;
 
@@ -169,4 +170,3 @@ size_t dstrftime(char *buf, size_t maxsize, const char *format, double tm)
 	tv.tv_usec = (long) (tm - floor(tm)) * 1000000;
 	return strftime(buf, maxsize, format, localtime((const time_t*) &tv));
 }
-

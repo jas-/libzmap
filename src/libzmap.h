@@ -15,16 +15,22 @@ class libzmap : public node::ObjectWrap {
   protected:
     uv_async_t watcher;
 
+    int max(int a, int b);
     int parse_mac(macaddr_t *out, char *in);
 
     void Config(v8::Handle<v8::Object> obj);
+    void ConfigLoglevel(v8::Handle<v8::Object> obj);
     void ConfigIface(v8::Handle<v8::Object> obj);
     void ConfigIpaddr(v8::Handle<v8::Object> obj);
     void ConfigHwaddr(v8::Handle<v8::Object> obj);
-    void ConfigGateway(v8::Handle<v8::Object> obj);
     void ConfigRange(v8::Handle<v8::Object> obj);
     void ConfigBlacklist(v8::Handle<v8::Object> obj);
     void ConfigWhitelist(v8::Handle<v8::Object> obj);
+
+    void ConfigWhiteBlackLists(void);
+    void ConfigTargets(void);
+    void ConfigCores(void);
+    void ConfigSeed(void);
 
     void Async(uv_async_t* req, int status);
     void AsyncCallback(uv_async_t* req, int status);

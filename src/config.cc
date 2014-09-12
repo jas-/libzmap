@@ -10,6 +10,7 @@ extern "C" {
 	#include "zmap-1.2.1/lib/blacklist.h"
 
 	#include "zmap-1.2.1/src/types.h"
+	#include "zmap-1.2.1/src/aesrand.h"
 	#include "zmap-1.2.1/src/zopt.h"
 	#include "zmap-1.2.1/src/state.h"
 	#include "zmap-1.2.1/src/get_gateway.h"
@@ -54,6 +55,13 @@ Handle<Value> libzmap::LibZMAP(const Arguments& args) {
   return scope.Close(obj);
 }
 
+int libzmap::max(int a, int b) {
+	if (a >= b) {
+		return a;
+	}
+	return b;
+}
+
 void libzmap::Config(Handle<Object> obj) {
   HandleScope scope;
 	libzmap lz;
@@ -61,49 +69,31 @@ void libzmap::Config(Handle<Object> obj) {
 	lz.ConfigIface(obj);
 	lz.ConfigIpaddr(obj);
 	lz.ConfigHwaddr(obj);
-/*
+	lz.ConfigRange(obj);
+	lz.ConfigBlacklist(obj);
+	lz.ConfigWhitelist(obj);
 
-  if (obj->Has(v8::String::NewSymbol("gateway"))) {
-    Handle<v8::Value> value = obj->Get(String::New("gateway"));
-    zconf.gateway = *v8::String::Utf8Value(value->ToString());
-		log_error("gateway", "%s => %s", zconf.gateway, *v8::String::Utf8Value(value->ToString()));
-  }
+	lz.ConfigWhiteBlackLists();
 
-  if (obj->Has(v8::String::NewSymbol("range"))) {
-    Handle<v8::Value> value = obj->Get(String::New("range"));
-    zconf.destination_cidrs = *v8::String::Utf8Value(value->ToString());
-  }
-*/
-  if (obj->Has(v8::String::NewSymbol("blacklist"))) {
-    Handle<v8::Value> value = obj->Get(String::New("blacklist"));
-    zconf.blacklist_filename = *v8::String::Utf8Value(value->ToString());
-  }
+	lz.ConfigTargets();
 
-  if (obj->Has(v8::String::NewSymbol("whitelist"))) {
-    Handle<v8::Value> value = obj->Get(String::New("whitelist"));
-    zconf.whitelist_filename = *v8::String::Utf8Value(value->ToString());
-  }
+	lz.ConfigCores();
+	lz.ConfigSeed();
 
-//	log_error("zmap", "whitelist %s & blacklist %s", zconf.whitelist_filename, zconf.blacklist_filename);
-
-	if (blacklist_init(zconf.whitelist_filename, zconf.blacklist_filename,
-			   zconf.destination_cidrs, zconf.destination_cidrs_len,
-			   NULL, 0)) {
-		log_fatal("zmap", "unable to initialize blacklist / whitelist");
-	}
-
-
-	uint64_t allowed = blacklist_count_allowed();
-	assert(allowed <= (1LL << 32));
-	if (allowed == (1LL << 32)) {
-		zsend.targets = 0xFFFFFFFF;
-	} else {
-		zsend.targets = allowed;
-	}
-	if (zsend.targets > zconf.max_targets) {
-		zsend.targets = zconf.max_targets;
-	}
 }
+
+/*
+void libzmap::ConfigLoglevel(Handle<Object> obj) {
+	HandleScope scope;
+
+  if (obj->Has(v8::String::NewSymbol("loglevel"))) {
+    Handle<v8::Value> value = obj->Get(String::New("loglevel"));
+    zconf.log_level = (char*) xmalloc(strlen(*v8::String::Utf8Value(value->ToString())) + 1);
+		strcpy(zconf.log_level, *v8::String::Utf8Value(value->ToString()));
+  }
+	log_debug("loglevel", "%s", zconf.whitelist_filename);
+}
+*/
 
 void libzmap::ConfigIface(Handle<Object> obj) {
   HandleScope scope;
@@ -205,4 +195,88 @@ void libzmap::ConfigHwaddr(Handle<Object> obj) {
 	log_debug("mac", "%02x:%02x:%02x:%02x:%02x:%02x",
 		  zconf.gw_mac[0], zconf.gw_mac[1], zconf.gw_mac[2],
 		  zconf.gw_mac[3], zconf.gw_mac[4], zconf.gw_mac[5]);
+}
+
+void libzmap::ConfigRange(Handle<Object> obj) {
+	HandleScope scope;
+
+  if (obj->Has(v8::String::NewSymbol("range"))) {
+    Handle<v8::Value> value = obj->Get(String::New("range"));
+    zconf.destination_cidrs = (char**) xmalloc(strlen(*v8::String::Utf8Value(value->ToString())) + 1);
+		strcpy((char*) zconf.destination_cidrs, *v8::String::Utf8Value(value->ToString()));
+		zconf.destination_cidrs_len = strlen(*v8::String::Utf8Value(value->ToString()));
+  }
+	log_debug("range", "%s", zconf.destination_cidrs);
+}
+
+void libzmap::ConfigBlacklist(Handle<Object> obj) {
+	HandleScope scope;
+
+  if (obj->Has(v8::String::NewSymbol("blacklist"))) {
+    Handle<v8::Value> value = obj->Get(String::New("blacklist"));
+    zconf.blacklist_filename = (char*) xmalloc(strlen(*v8::String::Utf8Value(value->ToString())) + 1);
+		strcpy(zconf.blacklist_filename, *v8::String::Utf8Value(value->ToString()));
+  }
+	log_debug("blacklist", "%s", zconf.blacklist_filename);
+}
+
+void libzmap::ConfigWhitelist(Handle<Object> obj) {
+	HandleScope scope;
+
+  if (obj->Has(v8::String::NewSymbol("whitelist"))) {
+    Handle<v8::Value> value = obj->Get(String::New("whitelist"));
+    zconf.whitelist_filename = (char*) xmalloc(strlen(*v8::String::Utf8Value(value->ToString())) + 1);
+		strcpy(zconf.whitelist_filename, *v8::String::Utf8Value(value->ToString()));
+  }
+	log_debug("whitelist", "%s", zconf.whitelist_filename);
+}
+
+void libzmap::ConfigWhiteBlackLists(void) {
+	HandleScope scope;
+
+	if (blacklist_init(zconf.whitelist_filename, zconf.blacklist_filename,
+			   zconf.destination_cidrs, zconf.destination_cidrs_len,
+			   NULL, 0)) {
+		log_fatal("zmap", "unable to initialize blacklist / whitelist");
+	}
+}
+
+void libzmap::ConfigTargets(void) {
+	HandleScope scope;
+
+	uint64_t allowed = blacklist_count_allowed();
+	assert(allowed <= (1LL << 32));
+	if (allowed == (1LL << 32)) {
+		zsend.targets = 0xFFFFFFFF;
+	} else {
+		zsend.targets = allowed;
+	}
+	if (zsend.targets > zconf.max_targets) {
+		zsend.targets = zconf.max_targets;
+	}
+}
+
+void libzmap::ConfigCores(void) {
+	HandleScope scope;
+	libzmap lz;
+
+	int num_cores = sysconf(_SC_NPROCESSORS_ONLN);
+	zconf.senders = lz.max(num_cores - 1, 1);
+	if (!zconf.quiet) {
+		zconf.senders = lz.max(zconf.senders - 1, 1);
+	}
+
+	if (zconf.senders > zsend.targets) {
+		zconf.senders = max(zsend.targets, 1);
+	}
+}
+
+void libzmap::ConfigSeed(void) {
+	HandleScope scope;
+
+	if (zconf.use_seed) {
+		aesrand_init(zconf.seed + 1);
+	} else {
+		aesrand_init(0);
+	}
 }
