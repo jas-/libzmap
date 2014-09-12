@@ -10,10 +10,12 @@ extern "C" {
 #include "zmap-1.2.1/lib/blacklist.h"
 
 #include "zmap-1.2.1/src/types.h"
-#include "zmap-1.2.1/src/aesrand.h"
-#include "zmap-1.2.1/src/zopt.h"
 #include "zmap-1.2.1/src/state.h"
+#include "zmap-1.2.1/src/zopt.h"
+#include "zmap-1.2.1/src/aesrand.h"
+#include "zmap-1.2.1/src/send.h"
 #include "zmap-1.2.1/src/get_gateway.h"
+#include "zmap-1.2.1/src/iterator.h"
 }
 
 using namespace node;
@@ -81,6 +83,11 @@ void libzmap::Config(Handle<Object> obj) {
 	lz.ConfigSeed();
 
 	/* init sending component */
+	iterator_t *it = send_init();
+	if (!it) {
+		log_fatal("zmap", "unable to initialize sending component");
+	}
+
 	/* start threads, use uv_async here vs. pthreads */
 	/* drop root privs */
 	/* async callback for completed workers */
@@ -92,8 +99,8 @@ void libzmap::ConfigLoglevel(Handle<Object> obj) {
 
 	if (obj->Has(v8::String::NewSymbol("loglevel"))) {
 		Handle<v8::Value> value = obj->Get(String::New("loglevel"));
-		zconf.log_level = (char*) xmalloc(strlen(*v8::String::Utf8Value(value->ToString())) + 1);
-		//		strcpy(zconf.log_level, *v8::String::Utf8Value(value->ToString()));
+//		zconf.log_level = (char*) xmalloc(strlen(*v8::String::Utf8Value(value->ToString())) + 1);
+//		strcpy(zconf.log_level, *v8::String::Utf8Value(value->ToString()));
 	}
 	log_debug("loglevel", "%s", zconf.whitelist_filename);
 }
