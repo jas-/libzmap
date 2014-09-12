@@ -16,6 +16,7 @@ extern "C" {
 #include "zmap-1.2.1/src/send.h"
 #include "zmap-1.2.1/src/get_gateway.h"
 #include "zmap-1.2.1/src/iterator.h"
+#include "zmap-1.2.1/src/probe_modules/probe_modules.h"
 }
 
 using namespace node;
@@ -67,6 +68,7 @@ int libzmap::max(int a, int b) {
 void libzmap::Config(Handle<Object> obj) {
 	HandleScope scope;
 	libzmap lz;
+	struct gengetopt_args_info args;
 
 	lz.ConfigIface(obj);
 	lz.ConfigIpaddr(obj);
@@ -82,7 +84,20 @@ void libzmap::Config(Handle<Object> obj) {
 	lz.ConfigCores();
 	lz.ConfigSeed();
 
-	/* init sending component */
+	zconf.shard_num = 0;
+	zconf.total_shards = 1;
+
+	/* Move this into its own function */
+	args.probe_module_arg = (char*) xmalloc(strlen("icmp_echoscan") + 1);
+	strcpy(args.probe_module_arg, "icmp_echoscan");
+
+	zconf.probe_module = get_probe_module_by_name(args.probe_module_arg);
+	if (!zconf.probe_module) {
+		log_fatal("zmap", "specified probe module (%s) does not exist\n",
+				args.probe_module_arg);
+	  exit(EXIT_FAILURE);
+	}
+
 	iterator_t *it = send_init();
 	if (!it) {
 		log_fatal("zmap", "unable to initialize sending component");
@@ -289,4 +304,14 @@ void libzmap::ConfigSeed(void) {
 	} else {
 		aesrand_init(0);
 	}
+}
+
+void libzmap::ConfigProbeModule(Handle<Object> obj) {
+	HandleScope scope;
+
+}
+
+void libzmap::ConfigOutputModule(Handle<Object> obj) {
+	HandleScope scope;
+
 }

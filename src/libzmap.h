@@ -26,6 +26,8 @@ class libzmap : public node::ObjectWrap {
 		void ConfigRange(v8::Handle<v8::Object> obj);
 		void ConfigBlacklist(v8::Handle<v8::Object> obj);
 		void ConfigWhitelist(v8::Handle<v8::Object> obj);
+		void ConfigProbeModule(v8::Handle<v8::Object> obj);
+		void ConfigOutputModule(v8::Handle<v8::Object> obj);
 
 		void ConfigWhiteBlackLists(void);
 		void ConfigTargets(void);

@@ -102,4 +102,3 @@ fielddef_t sys_fields[] = {
 	{.name="timestamp-ts", .type="int", .desc="timestamp of when response arrived in seconds since Epoch"},
 	{.name="timestamp-us", .type="int", .desc="microsecond part of timestamp (e.g. microseconds since 'timestamp-ts')"}
 };
-
