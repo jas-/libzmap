@@ -26,6 +26,8 @@ class libzmap : public node::ObjectWrap {
 		void ConfigRange(v8::Handle<v8::Object> obj);
 		void ConfigBlacklist(v8::Handle<v8::Object> obj);
 		void ConfigWhitelist(v8::Handle<v8::Object> obj);
+		void ConfigShards(v8::Handle<v8::Object> obj);
+		void ConfigShardTotal(v8::Handle<v8::Object> obj);
 		void ConfigProbeModule(v8::Handle<v8::Object> obj);
 		void ConfigOutputModule(v8::Handle<v8::Object> obj);
 
@@ -33,6 +35,7 @@ class libzmap : public node::ObjectWrap {
 		void ConfigTargets(void);
 		void ConfigCores(void);
 		void ConfigSeed(void);
+    void ConfigIterator(void);
 
 		void Async(uv_async_t* req, int status);
 		void AsyncCallback(uv_async_t* req, int status);

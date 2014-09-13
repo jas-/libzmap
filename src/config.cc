@@ -68,7 +68,6 @@ int libzmap::max(int a, int b) {
 void libzmap::Config(Handle<Object> obj) {
 	HandleScope scope;
 	libzmap lz;
-	struct gengetopt_args_info args;
 
 	lz.ConfigIface(obj);
 	lz.ConfigIpaddr(obj);
@@ -78,30 +77,15 @@ void libzmap::Config(Handle<Object> obj) {
 	lz.ConfigWhitelist(obj);
 
 	lz.ConfigWhiteBlackLists();
-
 	lz.ConfigTargets();
-
 	lz.ConfigCores();
 	lz.ConfigSeed();
 
-	zconf.shard_num = 0;
-	zconf.total_shards = 1;
+	lz.ConfigProbeModule(obj);
+	lz.ConfigShards(obj);
+	lz.ConfigShardTotal(obj);
 
-	/* Move this into its own function */
-	args.probe_module_arg = (char*) xmalloc(strlen("icmp_echoscan") + 1);
-	strcpy(args.probe_module_arg, "icmp_echoscan");
-
-	zconf.probe_module = get_probe_module_by_name(args.probe_module_arg);
-	if (!zconf.probe_module) {
-		log_fatal("zmap", "specified probe module (%s) does not exist\n",
-				args.probe_module_arg);
-	  exit(EXIT_FAILURE);
-	}
-
-	iterator_t *it = send_init();
-	if (!it) {
-		log_fatal("zmap", "unable to initialize sending component");
-	}
+	lz.ConfigIterator();
 
 	/* start threads, use uv_async here vs. pthreads */
 	/* drop root privs */
@@ -169,6 +153,7 @@ int libzmap::parse_mac(macaddr_t *out, char *in)
 {
 	if (strlen(in) < MAC_LEN*3-1)
 		return 0;
+
 	char octet[4];
 	octet[2] = '\0';
 	for (int i=0; i < MAC_LEN; i++) {
@@ -281,6 +266,39 @@ void libzmap::ConfigTargets(void) {
 	}
 }
 
+void libzmap::ConfigShards(Handle<Object> obj) {
+	HandleScope scope;
+
+	if (obj->Has(v8::String::NewSymbol("shards"))) {
+		Handle<v8::Value> value = obj->Get(String::New("shards"));
+		zconf.shard_num = value->NumberValue();
+	} else {
+		zconf.shard_num = 0;
+	}
+	log_debug("shards", "%d", zconf.shard_num);
+}
+
+void libzmap::ConfigShardTotal(Handle<Object> obj) {
+	HandleScope scope;
+
+	if (obj->Has(v8::String::NewSymbol("shardTotal"))) {
+		Handle<v8::Value> value = obj->Get(String::New("shardTotal"));
+		zconf.total_shards = value->NumberValue();
+	} else {
+		zconf.total_shards = 1;
+	}
+	log_debug("shardTotal", "%d", zconf.total_shards);
+}
+
+void libzmap::ConfigIterator(void) {
+	HandleScope scope;
+
+	iterator_t *it = send_init();
+	if (!it) {
+		log_fatal("zmap", "unable to initialize sending component");
+	}
+}
+
 void libzmap::ConfigCores(void) {
 	HandleScope scope;
 	libzmap lz;
@@ -308,7 +326,24 @@ void libzmap::ConfigSeed(void) {
 
 void libzmap::ConfigProbeModule(Handle<Object> obj) {
 	HandleScope scope;
+	struct gengetopt_args_info args;
 
+	if (obj->Has(v8::String::NewSymbol("probe-module"))) {
+		Handle<v8::Value> value = obj->Get(String::New("probe-module"));
+		args.probe_module_arg = (char*) xmalloc(strlen(*v8::String::Utf8Value(value->ToString())) + 1);
+		strcpy(args.probe_module_arg, *v8::String::Utf8Value(value->ToString()));
+	} else {
+		args.probe_module_arg = (char*) xmalloc(strlen("icmp_echoscan") + 1);
+		strcpy(args.probe_module_arg, "icmp_echoscan\0");
+	}
+
+	zconf.probe_module = get_probe_module_by_name(args.probe_module_arg);
+	if (!zconf.probe_module) {
+		log_fatal("zmap", "specified probe module (%s) does not exist",
+				args.probe_module_arg);
+	  exit(EXIT_FAILURE);
+	}
+	log_debug("probe-module", "%s", zconf.probe_module);
 }
 
 void libzmap::ConfigOutputModule(Handle<Object> obj) {
