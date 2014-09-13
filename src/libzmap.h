@@ -30,6 +30,7 @@ class libzmap : public node::ObjectWrap {
 		void ConfigShardTotal(v8::Handle<v8::Object> obj);
 		void ConfigProbeModule(v8::Handle<v8::Object> obj);
 		void ConfigOutputModule(v8::Handle<v8::Object> obj);
+    void ConfigBandwidth(v8::Handle<v8::Object> obj);
 
 		void ConfigWhiteBlackLists(void);
 		void ConfigTargets(void);

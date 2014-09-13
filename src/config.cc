@@ -73,6 +73,7 @@ void libzmap::Config(Handle<Object> obj) {
 	lz.ConfigIpaddr(obj);
 	lz.ConfigHwaddr(obj);
 	lz.ConfigRange(obj);
+	lz.ConfigBandwidth(obj);
 	lz.ConfigBlacklist(obj);
 	lz.ConfigWhitelist(obj);
 
@@ -281,13 +282,13 @@ void libzmap::ConfigShards(Handle<Object> obj) {
 void libzmap::ConfigShardTotal(Handle<Object> obj) {
 	HandleScope scope;
 
-	if (obj->Has(v8::String::NewSymbol("shardTotal"))) {
-		Handle<v8::Value> value = obj->Get(String::New("shardTotal"));
+	if (obj->Has(v8::String::NewSymbol("shardtotal"))) {
+		Handle<v8::Value> value = obj->Get(String::New("shartTotal"));
 		zconf.total_shards = value->NumberValue();
 	} else {
 		zconf.total_shards = 1;
 	}
-	log_debug("shardTotal", "%d", zconf.total_shards);
+	log_debug("shardtotal", "%d", zconf.total_shards);
 }
 
 void libzmap::ConfigIterator(void) {
@@ -349,4 +350,40 @@ void libzmap::ConfigProbeModule(Handle<Object> obj) {
 void libzmap::ConfigOutputModule(Handle<Object> obj) {
 	HandleScope scope;
 
+}
+
+void libzmap::ConfigBandwidth(Handle<Object> obj) {
+	HandleScope scope;
+	struct gengetopt_args_info args;
+	char *suffix;
+
+		if (obj->Has(v8::String::NewSymbol("bandwidth"))) {
+		Handle<v8::Value> value = obj->Get(String::New("bandwidth"));
+		zconf.bandwidth = atoi(*v8::String::Utf8Value(value->ToString()));
+		suffix = (char*) xmalloc(strlen(*v8::String::Utf8Value(value->ToString())) + 1);
+		strcpy(suffix, *v8::String::Utf8Value(value->ToString()));
+		while (*suffix >= '0' && *suffix <= '9') {
+			suffix++;
+		}
+		if (*suffix) {
+			switch (*suffix) {
+			case 'G': case 'g':
+				zconf.bandwidth *= 1000000000;
+				break;
+			case 'M': case 'm':
+				zconf.bandwidth *= 1000000;
+				break;
+			case 'K': case 'k':
+				zconf.bandwidth *= 1000;
+				break;
+			default:
+			  	fprintf(stderr, "%s: unknown bandwidth suffix '%s' "
+					"(supported suffixes are G, M and K)\n",
+					CMDLINE_PARSER_PACKAGE, suffix);
+				exit(EXIT_FAILURE);
+			}
+		}
+	}
+
+	log_debug("bandwidth", "%d%s", zconf.bandwidth, suffix);
 }
