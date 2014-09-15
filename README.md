@@ -26,7 +26,8 @@ var lib = require('../build/Release/zmap.node')
       "ipaddr": '10.0.2.15-10.0.2.18',
       "mac": '52:54:00:12:34:56',
       "shards": 2,
-      "shardTotal": 4,
+      "shardotal": 4,
+			"threads": 10,
       "range": '10.0.2.0/24',
       "blacklist": '/path/to/blacklist.conf',
       "whitelist": '/path/to/whitelist.conf'
