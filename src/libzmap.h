@@ -6,7 +6,13 @@
 
 extern "C" {
 #include "zmap-1.2.1/src/types.h"
+#include "zmap-1.2.1/src/shard.h"
 }
+
+typedef struct send_arg {
+  int sock;
+  shard_t *shard;
+} send_arg_t;
 
 class libzmap : public node::ObjectWrap {
 	public:
@@ -17,6 +23,9 @@ class libzmap : public node::ObjectWrap {
 
 		int max(int a, int b);
 		int parse_mac(macaddr_t *out, char *in);
+    static void* start_recv(void *arg);
+    static void* start_send(void *arg);
+    static void set_cpu(void);
 
 		void Config(v8::Handle<v8::Object> obj);
 		void ConfigLoglevel(v8::Handle<v8::Object> obj);
@@ -31,12 +40,12 @@ class libzmap : public node::ObjectWrap {
 		void ConfigProbeModule(v8::Handle<v8::Object> obj);
 		void ConfigOutputModule(v8::Handle<v8::Object> obj);
     void ConfigBandwidth(v8::Handle<v8::Object> obj);
+    void ConfigThreads(v8::Handle<v8::Object> obj);
 
 		void ConfigWhiteBlackLists(void);
 		void ConfigTargets(void);
 		void ConfigCores(void);
 		void ConfigSeed(void);
-    void ConfigIterator(void);
 
 		void Async(uv_async_t* req, int status);
 		void AsyncCallback(uv_async_t* req, int status);

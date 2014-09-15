@@ -5,6 +5,10 @@
 #include "./libzmap.h"
 
 extern "C" {
+
+#include <pcap/pcap.h>
+#include <pthread.h>
+
 #include "zmap-1.2.1/lib/logger.h"
 #include "zmap-1.2.1/lib/xalloc.h"
 #include "zmap-1.2.1/lib/blacklist.h"
@@ -15,12 +19,16 @@ extern "C" {
 #include "zmap-1.2.1/src/aesrand.h"
 #include "zmap-1.2.1/src/send.h"
 #include "zmap-1.2.1/src/get_gateway.h"
+#include "zmap-1.2.1/src/recv.h"
 #include "zmap-1.2.1/src/iterator.h"
 #include "zmap-1.2.1/src/probe_modules/probe_modules.h"
 }
 
 using namespace node;
 using namespace v8;
+
+pthread_mutex_t cpu_affinity_mutex = PTHREAD_MUTEX_INITIALIZER;
+pthread_mutex_t recv_ready_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 Handle<Value> libzmap::LibZMAP(const Arguments& args) {
 	HandleScope scope;
@@ -85,13 +93,66 @@ void libzmap::Config(Handle<Object> obj) {
 	lz.ConfigProbeModule(obj);
 	lz.ConfigShards(obj);
 	lz.ConfigShardTotal(obj);
+	lz.ConfigThreads(obj);
 
-	lz.ConfigIterator();
+	iterator_t *it = send_init();
+	if (!it) {
+		log_fatal("zmap", "unable to initialize sending component");
+	}
+
+	// start threads
+	pthread_t *tsend, trecv, tmon;
+	int r = pthread_create(&trecv, NULL, start_recv, NULL);
+	if (r != 0) {
+		log_fatal("zmap", "unable to create recv thread");
+	}
+	for (;;) {
+		pthread_mutex_lock(&recv_ready_mutex);
+		if (zconf.recv_ready) {
+			pthread_mutex_unlock(&recv_ready_mutex);
+			break;
+		}
+		pthread_mutex_unlock(&recv_ready_mutex);
+	}
+
+	tsend = (pthread_t*) xmalloc(zconf.senders * sizeof(pthread_t));
+	for (uint8_t i = 0; i < zconf.senders; i++) {
+		int sock;
+		if (zconf.dryrun) {
+			sock = get_dryrun_socket();
+		} else {
+			sock = get_socket();
+		}
+		send_arg_t *arg = (send_arg_t*) xmalloc(sizeof(send_arg_t));
+		arg->sock = sock;
+		arg->shard = get_shard(it, i);
+		int r = pthread_create(&tsend[i], NULL, start_send, arg);
+		if (r != 0) {
+			log_fatal("zmap", "unable to create send thread");
+			exit(EXIT_FAILURE);
+		}
+	}
+	log_debug("zmap", "%d sender threads spawned", zconf.senders);
+
 
 	/* start threads, use uv_async here vs. pthreads */
 	/* drop root privs */
 	/* async callback for completed workers */
 
+}
+
+void* libzmap::start_send(void *arg) {
+	send_arg_t *v = (send_arg_t *) arg;
+	set_cpu();
+	send_run(v->sock, v->shard);
+	free(v);
+	return NULL;
+}
+
+void* libzmap::start_recv(void *arg) {
+	set_cpu();
+	recv_run(&recv_ready_mutex);
+	return NULL;
 }
 
 void libzmap::ConfigLoglevel(Handle<Object> obj) {
@@ -283,21 +344,12 @@ void libzmap::ConfigShardTotal(Handle<Object> obj) {
 	HandleScope scope;
 
 	if (obj->Has(v8::String::NewSymbol("shardtotal"))) {
-		Handle<v8::Value> value = obj->Get(String::New("shartTotal"));
+		Handle<v8::Value> value = obj->Get(String::New("shartotal"));
 		zconf.total_shards = value->NumberValue();
 	} else {
 		zconf.total_shards = 1;
 	}
 	log_debug("shardtotal", "%d", zconf.total_shards);
-}
-
-void libzmap::ConfigIterator(void) {
-	HandleScope scope;
-
-	iterator_t *it = send_init();
-	if (!it) {
-		log_fatal("zmap", "unable to initialize sending component");
-	}
 }
 
 void libzmap::ConfigCores(void) {
@@ -329,13 +381,13 @@ void libzmap::ConfigProbeModule(Handle<Object> obj) {
 	HandleScope scope;
 	struct gengetopt_args_info args;
 
-	if (obj->Has(v8::String::NewSymbol("probe-module"))) {
-		Handle<v8::Value> value = obj->Get(String::New("probe-module"));
+	if (obj->Has(v8::String::NewSymbol("probemodule"))) {
+		Handle<v8::Value> value = obj->Get(String::New("probemodule"));
 		args.probe_module_arg = (char*) xmalloc(strlen(*v8::String::Utf8Value(value->ToString())) + 1);
 		strcpy(args.probe_module_arg, *v8::String::Utf8Value(value->ToString()));
 	} else {
 		args.probe_module_arg = (char*) xmalloc(strlen("icmp_echoscan") + 1);
-		strcpy(args.probe_module_arg, "icmp_echoscan\0");
+		strcpy(args.probe_module_arg, "icmp_echoscan");
 	}
 
 	zconf.probe_module = get_probe_module_by_name(args.probe_module_arg);
@@ -344,7 +396,7 @@ void libzmap::ConfigProbeModule(Handle<Object> obj) {
 				args.probe_module_arg);
 	  exit(EXIT_FAILURE);
 	}
-	log_debug("probe-module", "%s", zconf.probe_module);
+	log_debug("probemodule", "%s", zconf.probe_module);
 }
 
 void libzmap::ConfigOutputModule(Handle<Object> obj) {
@@ -357,14 +409,16 @@ void libzmap::ConfigBandwidth(Handle<Object> obj) {
 	struct gengetopt_args_info args;
 	char *suffix;
 
-		if (obj->Has(v8::String::NewSymbol("bandwidth"))) {
+	if (obj->Has(v8::String::NewSymbol("bandwidth"))) {
 		Handle<v8::Value> value = obj->Get(String::New("bandwidth"));
 		zconf.bandwidth = atoi(*v8::String::Utf8Value(value->ToString()));
 		suffix = (char*) xmalloc(strlen(*v8::String::Utf8Value(value->ToString())) + 1);
 		strcpy(suffix, *v8::String::Utf8Value(value->ToString()));
+
 		while (*suffix >= '0' && *suffix <= '9') {
 			suffix++;
 		}
+
 		if (*suffix) {
 			switch (*suffix) {
 			case 'G': case 'g':
@@ -377,13 +431,82 @@ void libzmap::ConfigBandwidth(Handle<Object> obj) {
 				zconf.bandwidth *= 1000;
 				break;
 			default:
-			  	fprintf(stderr, "%s: unknown bandwidth suffix '%s' "
-					"(supported suffixes are G, M and K)\n",
-					CMDLINE_PARSER_PACKAGE, suffix);
-				exit(EXIT_FAILURE);
+				log_fatal("bandwidth", "Unknown bandwidth suffix %s", suffix);
 			}
 		}
 	}
 
 	log_debug("bandwidth", "%d%s", zconf.bandwidth, suffix);
 }
+
+void libzmap::ConfigThreads(Handle<Object> obj) {
+	HandleScope scope;
+
+	if (obj->Has(v8::String::NewSymbol("threads"))) {
+		Handle<v8::Value> value = obj->Get(String::New("threads"));
+		zconf.senders = value->NumberValue();
+	} else {
+		int num_cores = sysconf(_SC_NPROCESSORS_ONLN);
+		zconf.senders = max(num_cores - 1, 1);
+		if (!zconf.quiet) {
+			// If monitoring, save a core for the monitor thread
+			zconf.senders = max(zconf.senders - 1, 1);
+		}
+	}
+
+	if (zconf.senders > zsend.targets) {
+		zconf.senders = max(zsend.targets, 1);
+	}
+
+	log_debug("threads", "%d", zconf.senders);
+}
+
+#if defined(__APPLE__)
+void libzmap::set_cpu(void)
+{
+	pthread_mutex_lock(&cpu_affinity_mutex);
+	static int core=0;
+	int num_cores = sysconf(_SC_NPROCESSORS_ONLN);
+
+	mach_port_t tid = pthread_mach_thread_np(pthread_self());
+	struct thread_affinity_policy policy;
+	policy.affinity_tag = core;
+	kern_return_t ret = thread_policy_set(tid,THREAD_AFFINITY_POLICY,
+					(thread_policy_t) &policy,THREAD_AFFINITY_POLICY_COUNT);
+	if (ret != KERN_SUCCESS) {
+		log_error("zmap", "can't set thread CPU affinity");
+	}
+	log_trace("zmap", "set thread %u affinity to core %d",
+			pthread_self(), core);
+	core = (core + 1) % num_cores;
+
+	pthread_mutex_unlock(&cpu_affinity_mutex);
+}
+
+#else
+
+#if defined(__FreeBSD__) || defined(__NetBSD__)
+#include <sys/param.h>
+#include <sys/cpuset.h>
+#define cpu_set_t cpuset_t
+#endif
+
+void libzmap::set_cpu(void)
+{
+	pthread_mutex_lock(&cpu_affinity_mutex);
+	static int core=0;
+	int num_cores = sysconf(_SC_NPROCESSORS_ONLN);
+	cpu_set_t cpuset;
+	CPU_ZERO(&cpuset);
+	CPU_SET(core, &cpuset);
+
+	if (pthread_setaffinity_np(pthread_self(),
+				sizeof(cpu_set_t), &cpuset) != 0) {
+		log_error("zmap", "can't set thread CPU affinity");
+	}
+	log_trace("zmap", "set thread %u affinity to core %d",
+			pthread_self(), core);
+	core = (core + 1) % num_cores;
+	pthread_mutex_unlock(&cpu_affinity_mutex);
+}
+#endif
