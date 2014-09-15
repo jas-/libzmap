@@ -22,6 +22,8 @@ extern "C" {
 #include "zmap-1.2.1/src/recv.h"
 #include "zmap-1.2.1/src/iterator.h"
 #include "zmap-1.2.1/src/probe_modules/probe_modules.h"
+#include "zmap-1.2.1/src/output_modules/output_modules.h"
+
 }
 
 using namespace node;
@@ -100,7 +102,7 @@ void libzmap::Config(Handle<Object> obj) {
 		log_fatal("zmap", "unable to initialize sending component");
 	}
 
-	// start threads
+	/* use uv_async vs. pthreads? */
 	pthread_t *tsend, trecv, tmon;
 	int r = pthread_create(&trecv, NULL, start_recv, NULL);
 	if (r != 0) {
@@ -134,9 +136,42 @@ void libzmap::Config(Handle<Object> obj) {
 	}
 	log_debug("zmap", "%d sender threads spawned", zconf.senders);
 
+	lz.drop_privs();
 
-	/* start threads, use uv_async here vs. pthreads */
-	/* drop root privs */
+	for (uint8_t i = 0; i < zconf.senders; i++) {
+		int r = pthread_join(tsend[i], NULL);
+		if (r != 0) {
+			log_fatal("zmap", "unable to join send thread");
+			exit(EXIT_FAILURE);
+		}
+	}
+	log_debug("zmap", "senders finished");
+	r = pthread_join(trecv, NULL);
+	if (r != 0) {
+		log_fatal("zmap", "unable to join recv thread");
+		exit(EXIT_FAILURE);
+	}
+	if (!zconf.quiet) {
+		pthread_join(tmon, NULL);
+		if (r != 0) {
+			log_fatal("zmap", "unable to join monitor thread");
+			exit(EXIT_FAILURE);
+		}
+	}
+
+	// finished
+	if (zconf.summary) {
+		summary();
+	}
+
+	if (zconf.output_module && zconf.output_module->close) {
+		zconf.output_module->close(&zconf, &zsend, &zrecv);
+	}
+	if (zconf.probe_module && zconf.probe_module->close) {
+		zconf.probe_module->close(&zconf, &zsend, &zrecv);
+	}
+	log_info("zmap", "completed");
+
 	/* async callback for completed workers */
 
 }
@@ -462,8 +497,7 @@ void libzmap::ConfigThreads(Handle<Object> obj) {
 }
 
 #if defined(__APPLE__)
-void libzmap::set_cpu(void)
-{
+void libzmap::set_cpu(void) {
 	pthread_mutex_lock(&cpu_affinity_mutex);
 	static int core=0;
 	int num_cores = sysconf(_SC_NPROCESSORS_ONLN);
@@ -491,8 +525,7 @@ void libzmap::set_cpu(void)
 #define cpu_set_t cpuset_t
 #endif
 
-void libzmap::set_cpu(void)
-{
+void libzmap::set_cpu(void) {
 	pthread_mutex_lock(&cpu_affinity_mutex);
 	static int core=0;
 	int num_cores = sysconf(_SC_NPROCESSORS_ONLN);
@@ -510,3 +543,71 @@ void libzmap::set_cpu(void)
 	pthread_mutex_unlock(&cpu_affinity_mutex);
 }
 #endif
+
+void libzmap::drop_privs() {
+	struct passwd *pw;
+	if (geteuid() != 0) {
+		log_warn("zmap", "unable to drop privs, not root");
+		return;
+	}
+	if ((pw = getpwnam("nobody")) != NULL) {
+		if (setuid(pw->pw_uid) == 0) {
+			return; // success
+		}
+	}
+	log_fatal("zmap", "Couldn't change UID to 'nobody'");
+}
+
+#define SI(w,x,y) printf("%s\t%s\t%i\n", w, x, y);
+#define SD(w,x,y) printf("%s\t%s\t%f\n", w, x, y);
+#define SU(w,x,y) printf("%s\t%s\t%u\n", w, x, y);
+#define SLU(w,x,y) printf("%s\t%s\t%lu\n", w, x, (long unsigned int) y);
+#define SS(w,x,y) printf("%s\t%s\t%s\n", w, x, y);
+#define STRTIME_LEN 1024
+
+void libzmap::summary(void)
+{
+	char send_start_time[STRTIME_LEN+1];
+	assert(dstrftime(send_start_time, STRTIME_LEN, "%c", zsend.start));
+	char send_end_time[STRTIME_LEN+1];
+	assert(dstrftime(send_end_time, STRTIME_LEN, "%c", zsend.finish));
+	char recv_start_time[STRTIME_LEN+1];
+	assert(dstrftime(recv_start_time, STRTIME_LEN, "%c", zrecv.start));
+	char recv_end_time[STRTIME_LEN+1];
+	assert(dstrftime(recv_end_time, STRTIME_LEN, "%c", zrecv.finish));
+	double hitrate = ((double) 100 * zrecv.success_unique)/((double)zsend.sent);
+
+	SU("cnf", "target-port", zconf.target_port);
+	SU("cnf", "source-port-range-begin", zconf.source_port_first);
+	SU("cnf", "source-port-range-end", zconf.source_port_last);
+	SS("cnf", "source-addr-range-begin", zconf.source_ip_first);
+	SS("cnf", "source-addr-range-end", zconf.source_ip_last);
+	SU("cnf", "maximum-targets", zconf.max_targets);
+	SU("cnf", "maximum-runtime", zconf.max_runtime);
+	SU("cnf", "maximum-results", zconf.max_results);
+	SU("cnf", "permutation-seed", zconf.seed);
+	SI("cnf", "cooldown-period", zconf.cooldown_secs);
+	SS("cnf", "send-interface", zconf.iface);
+	SI("cnf", "rate", zconf.rate);
+	SLU("cnf", "bandwidth", zconf.bandwidth);
+	SU("cnf", "shard-num", (unsigned) zconf.shard_num);
+	SU("cnf", "num-shards", (unsigned) zconf.total_shards);
+	SU("cnf", "senders", (unsigned) zconf.senders);
+	SU("env", "nprocessors", (unsigned) sysconf(_SC_NPROCESSORS_ONLN));
+	SS("exc", "send-start-time", send_start_time);
+	SS("exc", "send-end-time", send_end_time);
+	SS("exc", "recv-start-time", recv_start_time);
+	SS("exc", "recv-end-time", recv_end_time);
+	SU("exc", "sent", zsend.sent);
+	SU("exc", "blacklisted", zsend.blacklisted);
+	SU("exc", "first-scanned", zsend.first_scanned);
+	SD("exc", "hit-rate", hitrate);
+	SU("exc", "success-total", zrecv.success_total);
+	SU("exc", "success-unique", zrecv.success_unique);
+	SU("exc", "success-cooldown-total", zrecv.cooldown_total);
+	SU("exc", "success-cooldown-unique", zrecv.cooldown_unique);
+	SU("exc", "failure-total", zrecv.failure_total);
+	SU("exc", "sendto-failures", zsend.sendto_failures);
+	SU("adv", "permutation-gen", zconf.generator);
+	SS("exc", "scan-type", zconf.probe_module->name);
+}

@@ -26,6 +26,8 @@ class libzmap : public node::ObjectWrap {
     static void* start_recv(void *arg);
     static void* start_send(void *arg);
     static void set_cpu(void);
+    static void drop_privs();
+    static void summary(void);
 
 		void Config(v8::Handle<v8::Object> obj);
 		void ConfigLoglevel(v8::Handle<v8::Object> obj);
