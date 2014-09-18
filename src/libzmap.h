@@ -27,7 +27,6 @@ class libzmap : public node::ObjectWrap {
     static void* start_send(void *arg);
     static void set_cpu(void);
     static void drop_privs();
-    static void summary(void);
 
 		void Config(v8::Handle<v8::Object> obj);
 		void ConfigLoglevel(v8::Handle<v8::Object> obj);
@@ -49,10 +48,7 @@ class libzmap : public node::ObjectWrap {
 		void ConfigCores(void);
 		void ConfigSeed(void);
 
-		void Async(uv_async_t* req, int status);
-		void AsyncCallback(uv_async_t* req, int status);
-		void Listener(uv_async_t* handle, int status);
-    void Pthreads(void);
+    void Threads(void);
 
 		static v8::Handle<v8::Value> LibZMAP(const v8::Arguments& args);
 

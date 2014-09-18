@@ -7,7 +7,6 @@
 extern "C" {
 #include <pthread.h>
 
-#include "zmap-1.2.1/lib/logger.h"
 #include "zmap-1.2.1/lib/xalloc.h"
 #include "zmap-1.2.1/lib/blacklist.h"
 
@@ -16,9 +15,9 @@ extern "C" {
 #include "zmap-1.2.1/src/zopt.h"
 #include "zmap-1.2.1/src/aesrand.h"
 #include "zmap-1.2.1/src/get_gateway.h"
+
 #include "zmap-1.2.1/src/probe_modules/probe_modules.h"
 #include "zmap-1.2.1/src/output_modules/output_modules.h"
-
 }
 
 using namespace node;
@@ -51,36 +50,14 @@ void libzmap::Config(Handle<Object> obj) {
 	lz.ConfigSeed();
 
 	lz.ConfigProbeModule(obj);
+	lz.ConfigOutputModule(obj);
 	lz.ConfigShards(obj);
 	lz.ConfigShardTotal(obj);
 	lz.ConfigThreads(obj);
 
-	/* Set summary arg
-	zconf.summary = 1;
-	if (zconf.summary) {
-		summary();
-	}
-
-	if (zconf.output_module && zconf.output_module->close) {
-		zconf.output_module->close(&zconf, &zsend, &zrecv);
-	}
-
-	if (zconf.probe_module && zconf.probe_module->close) {
-		zconf.probe_module->close(&zconf, &zsend, &zrecv);
-	}
-
-	log_info("zmap", "completed"); */
-}
-
-void libzmap::ConfigLoglevel(Handle<Object> obj) {
-	HandleScope scope;
-
-	if (obj->Has(v8::String::NewSymbol("loglevel"))) {
-		Handle<v8::Value> value = obj->Get(String::New("loglevel"));
-//		zconf.log_level = (char*) xmalloc(strlen(*v8::String::Utf8Value(value->ToString())) + 1);
-//		strcpy(zconf.log_level, *v8::String::Utf8Value(value->ToString()));
-	}
-	log_debug("loglevel", "%s", zconf.whitelist_filename);
+	/* We should always be outputing to stdout as a json object */
+	zconf.output_filename = (char*) xmalloc(strlen("-") + 1);
+	strcpy(zconf.output_filename, "-");
 }
 
 void libzmap::ConfigIface(Handle<Object> obj) {
@@ -94,7 +71,6 @@ void libzmap::ConfigIface(Handle<Object> obj) {
 		zconf.iface = get_default_iface();
 		assert(zconf.iface);
 	}
-	log_debug("iface", "%s", zconf.iface);
 }
 
 void libzmap::ConfigIpaddr(Handle<Object> obj) {
@@ -117,14 +93,10 @@ void libzmap::ConfigIpaddr(Handle<Object> obj) {
 		zconf.source_ip_first = (char*) xmalloc(INET_ADDRSTRLEN);
 		zconf.source_ip_last = zconf.source_ip_first;
 		if (get_iface_ip(zconf.iface, &default_ip) < 0) {
-			log_fatal("zmap", "could not detect default IP address for for %s."
-					" Try specifying a source address (-S).", zconf.iface);
+			ThrowException(Exception::TypeError(String::New("Could not detect IP, specify as ipaddr")));
 		}
 		inet_ntop(AF_INET, &default_ip, zconf.source_ip_first, INET_ADDRSTRLEN);
-		log_debug("zmap", "no source IP address given. will use default address: %s.",
-				zconf.source_ip_first);
 	}
-	log_debug("ipaddr", "%s:%s", zconf.source_ip_first, zconf.source_ip_last);
 }
 
 #define MAC_LEN ETHER_ADDR_LEN
@@ -160,30 +132,21 @@ void libzmap::ConfigHwaddr(Handle<Object> obj) {
 		args.gateway_mac_arg = (char*) xmalloc(strlen(*v8::String::Utf8Value(value->ToString())) + 1);
 		strcpy(args.gateway_mac_arg, *v8::String::Utf8Value(value->ToString()));
 		if (!lz.parse_mac(zconf.gw_mac, args.gateway_mac_arg)) {
-			log_error("zmap", "invalid MAC address `%s'\n", args.gateway_mac_arg);
+			ThrowException(Exception::TypeError(String::New("Invalid gateway MAC address")));
 		}
 		zconf.gw_mac_set = 1;
 	} else {
 		struct in_addr gw_ip;
 		if (get_default_gw(&gw_ip, zconf.iface) < 0) {
-			log_fatal("zmap", "could not detect default gateway address for %s."
-					" Try setting default gateway mac address (-G).",
-					zconf.iface);
+			ThrowException(Exception::TypeError(String::New("Could not detect gateway MAC address, set using 'mac' param")));
 		}
-		log_debug("zmap", "found gateway IP %s on %s", inet_ntoa(gw_ip), zconf.iface);
 		zconf.gw_ip = gw_ip.s_addr;
 
 		if (get_hw_addr(&gw_ip, zconf.iface, zconf.gw_mac)) {
-			log_fatal("zmap", "could not detect GW MAC address for %s on %s."
-					" Try setting default gateway mac address (-G), or run"
-					" \"arp <gateway_ip>\" in terminal.",
-					inet_ntoa(gw_ip), zconf.iface);
+			ThrowException(Exception::TypeError(String::New("Could not detect gateway MAC address, set using 'mac' param")));
 		}
 		zconf.gw_mac_set = 1;
 	}
-	log_debug("mac", "%02x:%02x:%02x:%02x:%02x:%02x",
-			zconf.gw_mac[0], zconf.gw_mac[1], zconf.gw_mac[2],
-			zconf.gw_mac[3], zconf.gw_mac[4], zconf.gw_mac[5]);
 }
 
 void libzmap::ConfigRange(Handle<Object> obj) {
@@ -195,7 +158,6 @@ void libzmap::ConfigRange(Handle<Object> obj) {
 		strcpy((char*) zconf.destination_cidrs, *v8::String::Utf8Value(value->ToString()));
 		zconf.destination_cidrs_len = strlen(*v8::String::Utf8Value(value->ToString()));
 	}
-	log_debug("range", "%s", zconf.destination_cidrs);
 }
 
 void libzmap::ConfigBlacklist(Handle<Object> obj) {
@@ -206,7 +168,6 @@ void libzmap::ConfigBlacklist(Handle<Object> obj) {
 		zconf.blacklist_filename = (char*) xmalloc(strlen(*v8::String::Utf8Value(value->ToString())) + 1);
 		strcpy(zconf.blacklist_filename, *v8::String::Utf8Value(value->ToString()));
 	}
-	log_debug("blacklist", "%s", zconf.blacklist_filename);
 }
 
 void libzmap::ConfigWhitelist(Handle<Object> obj) {
@@ -217,7 +178,6 @@ void libzmap::ConfigWhitelist(Handle<Object> obj) {
 		zconf.whitelist_filename = (char*) xmalloc(strlen(*v8::String::Utf8Value(value->ToString())) + 1);
 		strcpy(zconf.whitelist_filename, *v8::String::Utf8Value(value->ToString()));
 	}
-	log_debug("whitelist", "%s", zconf.whitelist_filename);
 }
 
 void libzmap::ConfigWhiteBlackLists(void) {
@@ -226,7 +186,7 @@ void libzmap::ConfigWhiteBlackLists(void) {
 	if (blacklist_init(zconf.whitelist_filename, zconf.blacklist_filename,
 				zconf.destination_cidrs, zconf.destination_cidrs_len,
 				NULL, 0)) {
-		log_fatal("zmap", "unable to initialize blacklist / whitelist");
+		ThrowException(Exception::TypeError(String::New("Could not initialize whitelist/blacklists specified")));
 	}
 }
 
@@ -254,7 +214,6 @@ void libzmap::ConfigShards(Handle<Object> obj) {
 	} else {
 		zconf.shard_num = 0;
 	}
-	log_debug("shards", "%d", zconf.shard_num);
 }
 
 void libzmap::ConfigShardTotal(Handle<Object> obj) {
@@ -266,7 +225,6 @@ void libzmap::ConfigShardTotal(Handle<Object> obj) {
 	} else {
 		zconf.total_shards = 1;
 	}
-	log_debug("shardtotal", "%d", zconf.total_shards);
 }
 
 void libzmap::ConfigCores(void) {
@@ -308,17 +266,33 @@ void libzmap::ConfigProbeModule(Handle<Object> obj) {
 	}
 
 	zconf.probe_module = get_probe_module_by_name(args.probe_module_arg);
+
 	if (!zconf.probe_module) {
-		log_fatal("zmap", "specified probe module (%s) does not exist",
-				args.probe_module_arg);
-	  exit(EXIT_FAILURE);
+		ThrowException(Exception::TypeError(String::New("probe module does not exist")));
 	}
-	log_debug("probemodule", "%s", zconf.probe_module);
 }
 
 void libzmap::ConfigOutputModule(Handle<Object> obj) {
 	HandleScope scope;
+	struct gengetopt_args_info args;
 
+	if (obj->Has(v8::String::NewSymbol("outputmodule"))) {
+		Handle<v8::Value> value = obj->Get(String::New("outputmodule"));
+		args.output_module_arg = (char*) xmalloc(strlen(*v8::String::Utf8Value(value->ToString())) + 1);
+		strcpy(args.output_module_arg, *v8::String::Utf8Value(value->ToString()));
+	} else {
+		args.probe_module_arg = (char*) xmalloc(strlen("csv") + 1);
+		strcpy(args.probe_module_arg, "csv");
+	}
+
+	zconf.output_module = get_output_module_by_name(args.probe_module_arg);
+	zconf.raw_output_fields = (char*) "saddr";
+	zconf.filter_duplicates = 1;
+	zconf.filter_unsuccessful = 1;
+
+	if (!zconf.probe_module) {
+		ThrowException(Exception::TypeError(String::New("output module does not exist")));
+	}
 }
 
 void libzmap::ConfigBandwidth(Handle<Object> obj) {
@@ -346,10 +320,9 @@ void libzmap::ConfigBandwidth(Handle<Object> obj) {
 				zconf.bandwidth *= 1000;
 				break;
 			default:
-				log_fatal("bandwidth", "Unknown bandwidth suffix %s", suffix);
+				ThrowException(Exception::TypeError(String::New("Bandwidth suffix is invalid")));
 			}
 		}
-		log_debug("bandwidth", "%lu%s", zconf.bandwidth, suffix);
 	}
 }
 
@@ -370,7 +343,6 @@ void libzmap::ConfigThreads(Handle<Object> obj) {
 	if (zconf.senders > zsend.targets) {
 		zconf.senders = max(zsend.targets, 1);
 	}
-	log_debug("threads", "%d", zconf.senders);
 }
 
 #if defined(__APPLE__)
@@ -385,10 +357,8 @@ void libzmap::set_cpu(void) {
 	kern_return_t ret = thread_policy_set(tid,THREAD_AFFINITY_POLICY,
 					(thread_policy_t) &policy,THREAD_AFFINITY_POLICY_COUNT);
 	if (ret != KERN_SUCCESS) {
-		log_error("zmap", "can't set thread CPU affinity");
+		ThrowException(Exception::TypeError(String::New("Cannot set CPU affinity")));
 	}
-	log_trace("zmap", "set thread %u affinity to core %d",
-			pthread_self(), core);
 	core = (core + 1) % num_cores;
 
 	pthread_mutex_unlock(&cpu_affinity_mutex);
@@ -412,79 +382,26 @@ void libzmap::set_cpu(void) {
 
 	if (pthread_setaffinity_np(pthread_self(),
 				sizeof(cpu_set_t), &cpuset) != 0) {
-		log_error("zmap", "can't set thread CPU affinity");
+		ThrowException(Exception::TypeError(String::New("Can't set thread CPU affinity")));
 	}
-	log_trace("zmap", "set thread %u affinity to core %d",
-			pthread_self(), core);
 	core = (core + 1) % num_cores;
 	pthread_mutex_unlock(&cpu_affinity_mutex);
 }
 #endif
 
 void libzmap::drop_privs() {
+	HandleScope scope;
 	struct passwd *pw;
+
 	if (geteuid() != 0) {
-		log_warn("zmap", "unable to drop privs, not root");
-		return;
+		ThrowException(Exception::TypeError(String::New("Unable to drop privileges")));
 	}
+
 	if ((pw = getpwnam("nobody")) != NULL) {
 		if (setuid(pw->pw_uid) == 0) {
-			return; // success
+			return;
 		}
 	}
-	log_fatal("zmap", "Couldn't change UID to 'nobody'");
-}
 
-#define SI(w,x,y) printf("%s\t%s\t%i\n", w, x, y);
-#define SD(w,x,y) printf("%s\t%s\t%f\n", w, x, y);
-#define SU(w,x,y) printf("%s\t%s\t%u\n", w, x, y);
-#define SLU(w,x,y) printf("%s\t%s\t%lu\n", w, x, (long unsigned int) y);
-#define SS(w,x,y) printf("%s\t%s\t%s\n", w, x, y);
-#define STRTIME_LEN 1024
-
-void libzmap::summary(void)
-{
-	char send_start_time[STRTIME_LEN+1];
-	assert(dstrftime(send_start_time, STRTIME_LEN, "%c", zsend.start));
-	char send_end_time[STRTIME_LEN+1];
-	assert(dstrftime(send_end_time, STRTIME_LEN, "%c", zsend.finish));
-	char recv_start_time[STRTIME_LEN+1];
-	assert(dstrftime(recv_start_time, STRTIME_LEN, "%c", zrecv.start));
-	char recv_end_time[STRTIME_LEN+1];
-	assert(dstrftime(recv_end_time, STRTIME_LEN, "%c", zrecv.finish));
-	double hitrate = ((double) 100 * zrecv.success_unique)/((double)zsend.sent);
-
-	SU("cnf", "target-port", zconf.target_port);
-	SU("cnf", "source-port-range-begin", zconf.source_port_first);
-	SU("cnf", "source-port-range-end", zconf.source_port_last);
-	SS("cnf", "source-addr-range-begin", zconf.source_ip_first);
-	SS("cnf", "source-addr-range-end", zconf.source_ip_last);
-	SU("cnf", "maximum-targets", zconf.max_targets);
-	SU("cnf", "maximum-runtime", zconf.max_runtime);
-	SU("cnf", "maximum-results", zconf.max_results);
-	SU("cnf", "permutation-seed", zconf.seed);
-	SI("cnf", "cooldown-period", zconf.cooldown_secs);
-	SS("cnf", "send-interface", zconf.iface);
-	SI("cnf", "rate", zconf.rate);
-	SLU("cnf", "bandwidth", zconf.bandwidth);
-	SU("cnf", "shard-num", (unsigned) zconf.shard_num);
-	SU("cnf", "num-shards", (unsigned) zconf.total_shards);
-	SU("cnf", "senders", (unsigned) zconf.senders);
-	SU("env", "nprocessors", (unsigned) sysconf(_SC_NPROCESSORS_ONLN));
-	SS("exc", "send-start-time", send_start_time);
-	SS("exc", "send-end-time", send_end_time);
-	SS("exc", "recv-start-time", recv_start_time);
-	SS("exc", "recv-end-time", recv_end_time);
-	SU("exc", "sent", zsend.sent);
-	SU("exc", "blacklisted", zsend.blacklisted);
-	SU("exc", "first-scanned", zsend.first_scanned);
-	SD("exc", "hit-rate", hitrate);
-	SU("exc", "success-total", zrecv.success_total);
-	SU("exc", "success-unique", zrecv.success_unique);
-	SU("exc", "success-cooldown-total", zrecv.cooldown_total);
-	SU("exc", "success-cooldown-unique", zrecv.cooldown_unique);
-	SU("exc", "failure-total", zrecv.failure_total);
-	SU("exc", "sendto-failures", zsend.sendto_failures);
-	SU("adv", "permutation-gen", zconf.generator);
-	SS("exc", "scan-type", zconf.probe_module->name);
+	ThrowException(Exception::TypeError(String::New("Unable to drop privileges")));
 }

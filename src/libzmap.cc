@@ -38,13 +38,16 @@ Handle<Value> libzmap::LibZMAP(const Arguments& args) {
 		}
 	}
 
-	obj = args[0]->ToObject();
-	lz.Config(obj);
+	if (args[0]->IsObject()) {
+    obj = args[0]->ToObject();
+    lz.Config(obj);
+  }
 
-  lz.Pthreads();
+  lz.Threads();
 
-  /* return JSON object */
-	return scope.Close(obj);
+  /* return NULL error & JSON object to specified callback param */
+
+	return scope.Close(Undefined());
 }
 
 void libzmap::Init (Handle<Object> exports) {
