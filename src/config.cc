@@ -151,6 +151,8 @@ void libzmap::Config(Handle<Object> obj) {
 		log_fatal("zmap", "unable to join recv thread");
 		exit(EXIT_FAILURE);
 	}
+	/* Set quiet arg */
+	zconf.quiet = 1;
 	if (!zconf.quiet) {
 		pthread_join(tmon, NULL);
 		if (r != 0) {
@@ -159,7 +161,8 @@ void libzmap::Config(Handle<Object> obj) {
 		}
 	}
 
-	// finished
+	/* Set summary arg */
+	zconf.summary = 1;
 	if (zconf.summary) {
 		summary();
 	}
@@ -167,9 +170,11 @@ void libzmap::Config(Handle<Object> obj) {
 	if (zconf.output_module && zconf.output_module->close) {
 		zconf.output_module->close(&zconf, &zsend, &zrecv);
 	}
+
 	if (zconf.probe_module && zconf.probe_module->close) {
 		zconf.probe_module->close(&zconf, &zsend, &zrecv);
 	}
+
 	log_info("zmap", "completed");
 
 	/* async callback for completed workers */
@@ -441,13 +446,11 @@ void libzmap::ConfigOutputModule(Handle<Object> obj) {
 
 void libzmap::ConfigBandwidth(Handle<Object> obj) {
 	HandleScope scope;
-	struct gengetopt_args_info args;
-	char *suffix;
 
 	if (obj->Has(v8::String::NewSymbol("bandwidth"))) {
 		Handle<v8::Value> value = obj->Get(String::New("bandwidth"));
 		zconf.bandwidth = atoi(*v8::String::Utf8Value(value->ToString()));
-		suffix = (char*) xmalloc(strlen(*v8::String::Utf8Value(value->ToString())) + 1);
+		char *suffix = (char*) xmalloc(strlen(*v8::String::Utf8Value(value->ToString())) + 1);
 		strcpy(suffix, *v8::String::Utf8Value(value->ToString()));
 
 		while (*suffix >= '0' && *suffix <= '9') {
@@ -469,9 +472,8 @@ void libzmap::ConfigBandwidth(Handle<Object> obj) {
 				log_fatal("bandwidth", "Unknown bandwidth suffix %s", suffix);
 			}
 		}
+		log_debug("bandwidth", "%lu%s", zconf.bandwidth, suffix);
 	}
-
-	log_debug("bandwidth", "%d%s", zconf.bandwidth, suffix);
 }
 
 void libzmap::ConfigThreads(Handle<Object> obj) {

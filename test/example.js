@@ -3,7 +3,7 @@ var lib = require('../build/Release/zmap.node')
 //      iface: 'eth0',
 //      ipaddr: '10.0.2.15-10.0.2.18',
       mac: '52:54:00:12:34:56',
-//      bandwidth: '256M',
+      bandwidth: '256M',
       shards: 2,
       shardtotal: 4,
       threads: 10,
