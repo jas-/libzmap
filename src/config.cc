@@ -5,8 +5,6 @@
 #include "./libzmap.h"
 
 extern "C" {
-
-#include <pcap/pcap.h>
 #include <pthread.h>
 
 #include "zmap-1.2.1/lib/logger.h"
@@ -17,10 +15,7 @@ extern "C" {
 #include "zmap-1.2.1/src/state.h"
 #include "zmap-1.2.1/src/zopt.h"
 #include "zmap-1.2.1/src/aesrand.h"
-#include "zmap-1.2.1/src/send.h"
 #include "zmap-1.2.1/src/get_gateway.h"
-#include "zmap-1.2.1/src/recv.h"
-#include "zmap-1.2.1/src/iterator.h"
 #include "zmap-1.2.1/src/probe_modules/probe_modules.h"
 #include "zmap-1.2.1/src/output_modules/output_modules.h"
 
@@ -30,43 +25,6 @@ using namespace node;
 using namespace v8;
 
 pthread_mutex_t cpu_affinity_mutex = PTHREAD_MUTEX_INITIALIZER;
-pthread_mutex_t recv_ready_mutex = PTHREAD_MUTEX_INITIALIZER;
-
-Handle<Value> libzmap::LibZMAP(const Arguments& args) {
-	HandleScope scope;
-	libzmap lz;
-
-	Local<Function> callback;
-	Local<Object> obj;
-
-	if (args.Length() < 1) {
-		ThrowException(Exception::TypeError(String::New("Arguments invalid")));
-		return scope.Close(Undefined());
-	}
-
-	if (args[0]->IsFunction()) {
-		callback = Local<Function>::Cast(args[0]);
-	} else {
-		if (!args[1]->IsFunction()) {
-			ThrowException(Exception::TypeError(String::New("Function expected")));
-			return scope.Close(Undefined());
-		}
-
-		callback = Local<Function>::Cast(args[1]);
-
-		if (!args[0]->IsObject()) {
-			ThrowException(Exception::TypeError(String::New("Object expected")));
-			return scope.Close(Undefined());
-		}
-	}
-
-	if (args[0]->IsObject()) {
-		obj = args[0]->ToObject();
-		lz.Config(obj);
-	}
-
-	return scope.Close(obj);
-}
 
 int libzmap::max(int a, int b) {
 	if (a >= b) {
@@ -97,71 +55,7 @@ void libzmap::Config(Handle<Object> obj) {
 	lz.ConfigShardTotal(obj);
 	lz.ConfigThreads(obj);
 
-	iterator_t *it = send_init();
-	if (!it) {
-		log_fatal("zmap", "unable to initialize sending component");
-	}
-
-	/* use uv_async vs. pthreads? */
-	pthread_t *tsend, trecv, tmon;
-	int r = pthread_create(&trecv, NULL, start_recv, NULL);
-	if (r != 0) {
-		log_fatal("zmap", "unable to create recv thread");
-	}
-	for (;;) {
-		pthread_mutex_lock(&recv_ready_mutex);
-		if (zconf.recv_ready) {
-			pthread_mutex_unlock(&recv_ready_mutex);
-			break;
-		}
-		pthread_mutex_unlock(&recv_ready_mutex);
-	}
-
-	tsend = (pthread_t*) xmalloc(zconf.senders * sizeof(pthread_t));
-	for (uint8_t i = 0; i < zconf.senders; i++) {
-		int sock;
-		if (zconf.dryrun) {
-			sock = get_dryrun_socket();
-		} else {
-			sock = get_socket();
-		}
-		send_arg_t *arg = (send_arg_t*) xmalloc(sizeof(send_arg_t));
-		arg->sock = sock;
-		arg->shard = get_shard(it, i);
-		int r = pthread_create(&tsend[i], NULL, start_send, arg);
-		if (r != 0) {
-			log_fatal("zmap", "unable to create send thread");
-			exit(EXIT_FAILURE);
-		}
-	}
-	log_debug("zmap", "%d sender threads spawned", zconf.senders);
-
-	lz.drop_privs();
-
-	for (uint8_t i = 0; i < zconf.senders; i++) {
-		int r = pthread_join(tsend[i], NULL);
-		if (r != 0) {
-			log_fatal("zmap", "unable to join send thread");
-			exit(EXIT_FAILURE);
-		}
-	}
-	log_debug("zmap", "senders finished");
-	r = pthread_join(trecv, NULL);
-	if (r != 0) {
-		log_fatal("zmap", "unable to join recv thread");
-		exit(EXIT_FAILURE);
-	}
-	/* Set quiet arg */
-	zconf.quiet = 1;
-	if (!zconf.quiet) {
-		pthread_join(tmon, NULL);
-		if (r != 0) {
-			log_fatal("zmap", "unable to join monitor thread");
-			exit(EXIT_FAILURE);
-		}
-	}
-
-	/* Set summary arg */
+	/* Set summary arg
 	zconf.summary = 1;
 	if (zconf.summary) {
 		summary();
@@ -175,24 +69,7 @@ void libzmap::Config(Handle<Object> obj) {
 		zconf.probe_module->close(&zconf, &zsend, &zrecv);
 	}
 
-	log_info("zmap", "completed");
-
-	/* async callback for completed workers */
-
-}
-
-void* libzmap::start_send(void *arg) {
-	send_arg_t *v = (send_arg_t *) arg;
-	set_cpu();
-	send_run(v->sock, v->shard);
-	free(v);
-	return NULL;
-}
-
-void* libzmap::start_recv(void *arg) {
-	set_cpu();
-	recv_run(&recv_ready_mutex);
-	return NULL;
+	log_info("zmap", "completed"); */
 }
 
 void libzmap::ConfigLoglevel(Handle<Object> obj) {
@@ -486,7 +363,6 @@ void libzmap::ConfigThreads(Handle<Object> obj) {
 		int num_cores = sysconf(_SC_NPROCESSORS_ONLN);
 		zconf.senders = max(num_cores - 1, 1);
 		if (!zconf.quiet) {
-			// If monitoring, save a core for the monitor thread
 			zconf.senders = max(zconf.senders - 1, 1);
 		}
 	}
@@ -494,7 +370,6 @@ void libzmap::ConfigThreads(Handle<Object> obj) {
 	if (zconf.senders > zsend.targets) {
 		zconf.senders = max(zsend.targets, 1);
 	}
-
 	log_debug("threads", "%d", zconf.senders);
 }
 

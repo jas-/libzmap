@@ -52,6 +52,7 @@ class libzmap : public node::ObjectWrap {
 		void Async(uv_async_t* req, int status);
 		void AsyncCallback(uv_async_t* req, int status);
 		void Listener(uv_async_t* handle, int status);
+    void Pthreads(void);
 
 		static v8::Handle<v8::Value> LibZMAP(const v8::Arguments& args);
 
