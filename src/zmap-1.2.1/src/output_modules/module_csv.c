@@ -110,4 +110,3 @@ output_module_t module_csv_file = {
 	.process_ip = &csv_process,
 	.helptext = NULL
 };
-

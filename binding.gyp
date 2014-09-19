@@ -113,23 +113,6 @@
 		"conditions": [
       ['OS=="linux"', {
         "cflags": [
-          "-Wall",
-          "-Wformat=2",
-          "-Wno-format-nonliteral",
-          "-pedantic",
-          "-fno-strict-aliasing",
-          "-Wextra",
-          "-Wfloat-equal",
-          "-Wundef",
-          "-Wwrite-strings",
-          "-Wredundant-decls",
-          "-Winit-self",
-          "-Wmissing-noreturn",
-          "-Wstack-protector",
-          "-U_FORTIFY_SOURCE",
-          "-D_FORTIFY_SOURCE=2",
-          "-fstack-protector-all",
-          "-fwrapv",
           "-fPIC",
           "-O2",
 				],

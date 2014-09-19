@@ -5,6 +5,7 @@
 #include "./libzmap.h"
 
 extern "C" {
+#include <unistd.h>
 #include <pthread.h>
 
 #include "zmap-1.2.1/lib/xalloc.h"
@@ -86,15 +87,17 @@ void libzmap::ConfigIpaddr(Handle<Object> obj) {
 		if (dash) {
 			*dash = '\0';
 			zconf.source_ip_last = dash+1;
+		} else {
+			zconf.source_ip_last = zconf.source_ip_first;
 		}
 
 	} else {
 		struct in_addr default_ip;
 		zconf.source_ip_first = (char*) xmalloc(INET_ADDRSTRLEN);
-		zconf.source_ip_last = zconf.source_ip_first;
 		if (get_iface_ip(zconf.iface, &default_ip) < 0) {
 			ThrowException(Exception::TypeError(String::New("Could not detect IP, specify as ipaddr")));
 		}
+		zconf.source_ip_last = zconf.source_ip_first;
 		inet_ntop(AF_INET, &default_ip, zconf.source_ip_first, INET_ADDRSTRLEN);
 	}
 }
