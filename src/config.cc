@@ -408,3 +408,4 @@ void libzmap::drop_privs() {
 
 	ThrowException(Exception::TypeError(String::New("Unable to drop privileges")));
 }
+
