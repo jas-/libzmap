@@ -56,7 +56,7 @@ void libzmap::Config(Handle<Object> obj) {
 	lz.ConfigShardTotal(obj);
 	lz.ConfigThreads(obj);
 
-	/* We should always be outputing to stdout as a json object */
+	/* Capture all stdout & stderr to JSON object? */
 	zconf.output_filename = (char*) xmalloc(strlen("-") + 1);
 	strcpy(zconf.output_filename, "-");
 }
@@ -289,9 +289,9 @@ void libzmap::ConfigOutputModule(Handle<Object> obj) {
 	}
 
 	zconf.output_module = get_output_module_by_name(args.probe_module_arg);
-	zconf.raw_output_fields = (char*) "saddr";
-	zconf.filter_duplicates = 1;
-	zconf.filter_unsuccessful = 1;
+	zconf.raw_output_fields = (char*) "response,saddr,daddr,sport,seq,ack,in_cooldown,is_repeat,timestamp";
+	zconf.filter_duplicates = 0;
+	zconf.filter_unsuccessful = 0;
 
 	if (!zconf.probe_module) {
 		ThrowException(Exception::TypeError(String::New("output module does not exist")));
