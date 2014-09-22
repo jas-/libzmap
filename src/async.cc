@@ -35,17 +35,19 @@ void libzmap::Threads(void) {
 	}
 
 	if (!it) {
-		ThrowException(Exception::TypeError(String::New("Unable to initialize sending component")));
+		ThrowException(Exception::TypeError(
+			String::New("Unable to initialize sending component")));
 	}
 
 	if (zconf.output_module && zconf.output_module->start) {
 		zconf.output_module->start(&zconf, &zsend, &zrecv);
 	}
 
-	pthread_t *tsend, trecv, tmon;
+	pthread_t *tsend, trecv;
 	int r = pthread_create(&trecv, NULL, start_recv, NULL);
 	if (r != 0) {
-		ThrowException(Exception::TypeError(String::New("Unable to initialize recieving component")));
+		ThrowException(Exception::TypeError(
+			String::New("Unable to initialize recieving component")));
 	}
 	for (;;) {
 		pthread_mutex_lock(&recv_ready_mutex);
@@ -70,7 +72,8 @@ void libzmap::Threads(void) {
 		arg->shard = get_shard(it, i);
 		int r = pthread_create(&tsend[i], NULL, start_send, arg);
 		if (r != 0) {
-			ThrowException(Exception::TypeError(String::New("Unable to create send thread")));
+			ThrowException(Exception::TypeError(
+				String::New("Unable to create send thread")));
 		}
 	}
 
@@ -79,13 +82,15 @@ void libzmap::Threads(void) {
 	for (uint8_t i = 0; i < zconf.senders; i++) {
 		int r = pthread_join(tsend[i], NULL);
 		if (r != 0) {
-			ThrowException(Exception::TypeError(String::New("Unable to join send thread")));
+			ThrowException(Exception::TypeError(
+				String::New("Unable to join send thread")));
 		}
 	}
 
 	r = pthread_join(trecv, NULL);
 	if (r != 0) {
-		ThrowException(Exception::TypeError(String::New("Unable to join receive threads")));
+		ThrowException(Exception::TypeError(
+			String::New("Unable to join receive threads")));
 	}
 
 	lz.summary();

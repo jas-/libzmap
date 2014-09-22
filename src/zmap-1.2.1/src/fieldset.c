@@ -194,4 +194,3 @@ fieldset_t *translate_fieldset(fieldset_t *fs, translation_t *t)
 	retv->len = t->len;
 	return retv;
 }
-

@@ -10,6 +10,7 @@ extern "C" {
 
 #include "zmap-1.2.1/lib/xalloc.h"
 #include "zmap-1.2.1/lib/blacklist.h"
+#include "zmap-1.2.1/lib/logger.h"
 
 #include "zmap-1.2.1/src/types.h"
 #include "zmap-1.2.1/src/state.h"
@@ -66,7 +67,8 @@ void libzmap::ConfigIface(Handle<Object> obj) {
 
 	if (obj->Has(v8::String::NewSymbol("iface"))) {
 		Handle<v8::Value> value = obj->Get(String::New("iface"));
-		zconf.iface = (char*) xmalloc(strlen(*v8::String::Utf8Value(value->ToString())) + 1);
+		zconf.iface =
+			(char*) xmalloc(strlen(*v8::String::Utf8Value(value->ToString())) + 1);
 		strcpy(zconf.iface, *v8::String::Utf8Value(value->ToString()));
 	} else {
 		zconf.iface = get_default_iface();
@@ -79,7 +81,8 @@ void libzmap::ConfigIpaddr(Handle<Object> obj) {
 
 	if (obj->Has(v8::String::NewSymbol("ipaddr"))) {
 		Handle<v8::Value> value = obj->Get(String::New("ipaddr"));
-		zconf.source_ip_first = (char*) xmalloc(strlen(*v8::String::Utf8Value(value->ToString())) + 1);
+		zconf.source_ip_first =
+			(char*) xmalloc(strlen(*v8::String::Utf8Value(value->ToString())) + 1);
 		strcpy(zconf.source_ip_first, *v8::String::Utf8Value(value->ToString()));
 
 		char *dash = strchr(zconf.source_ip_first, '-');
@@ -95,7 +98,8 @@ void libzmap::ConfigIpaddr(Handle<Object> obj) {
 		struct in_addr default_ip;
 		zconf.source_ip_first = (char*) xmalloc(INET_ADDRSTRLEN);
 		if (get_iface_ip(zconf.iface, &default_ip) < 0) {
-			ThrowException(Exception::TypeError(String::New("Could not detect IP, specify as ipaddr")));
+			ThrowException(Exception::TypeError(
+				String::New("Could not detect IP, specify as ipaddr")));
 		}
 		zconf.source_ip_last = zconf.source_ip_first;
 		inet_ntop(AF_INET, &default_ip, zconf.source_ip_first, INET_ADDRSTRLEN);
@@ -132,21 +136,25 @@ void libzmap::ConfigHwaddr(Handle<Object> obj) {
 
 	if (obj->Has(v8::String::NewSymbol("mac"))) {
 		Handle<v8::Value> value = obj->Get(String::New("mac"));
-		args.gateway_mac_arg = (char*) xmalloc(strlen(*v8::String::Utf8Value(value->ToString())) + 1);
+		args.gateway_mac_arg =
+			(char*) xmalloc(strlen(*v8::String::Utf8Value(value->ToString())) + 1);
 		strcpy(args.gateway_mac_arg, *v8::String::Utf8Value(value->ToString()));
 		if (!lz.parse_mac(zconf.gw_mac, args.gateway_mac_arg)) {
-			ThrowException(Exception::TypeError(String::New("Invalid gateway MAC address")));
+			ThrowException(Exception::TypeError(
+				String::New("Invalid gateway MAC address")));
 		}
 		zconf.gw_mac_set = 1;
 	} else {
 		struct in_addr gw_ip;
 		if (get_default_gw(&gw_ip, zconf.iface) < 0) {
-			ThrowException(Exception::TypeError(String::New("Could not detect gateway MAC address, set using 'mac' param")));
+			ThrowException(Exception::TypeError(
+				String::New("Could not detect gateway MAC address")));
 		}
 		zconf.gw_ip = gw_ip.s_addr;
 
 		if (get_hw_addr(&gw_ip, zconf.iface, zconf.gw_mac)) {
-			ThrowException(Exception::TypeError(String::New("Could not detect gateway MAC address, set using 'mac' param")));
+			ThrowException(Exception::TypeError(
+				String::New("Could not detect gateway MAC address")));
 		}
 		zconf.gw_mac_set = 1;
 	}
@@ -157,9 +165,12 @@ void libzmap::ConfigRange(Handle<Object> obj) {
 
 	if (obj->Has(v8::String::NewSymbol("range"))) {
 		Handle<v8::Value> value = obj->Get(String::New("range"));
-		zconf.destination_cidrs = (char**) xmalloc(strlen(*v8::String::Utf8Value(value->ToString())) + 1);
-		strcpy((char*) zconf.destination_cidrs, *v8::String::Utf8Value(value->ToString()));
-		zconf.destination_cidrs_len = strlen(*v8::String::Utf8Value(value->ToString()));
+		zconf.destination_cidrs =
+			(char**) xmalloc(strlen(*v8::String::Utf8Value(value->ToString())) + 1);
+		strcpy((char*) zconf.destination_cidrs,
+						*v8::String::Utf8Value(value->ToString()));
+		zconf.destination_cidrs_len =
+			strlen(*v8::String::Utf8Value(value->ToString()));
 	}
 }
 
@@ -168,7 +179,8 @@ void libzmap::ConfigBlacklist(Handle<Object> obj) {
 
 	if (obj->Has(v8::String::NewSymbol("blacklist"))) {
 		Handle<v8::Value> value = obj->Get(String::New("blacklist"));
-		zconf.blacklist_filename = (char*) xmalloc(strlen(*v8::String::Utf8Value(value->ToString())) + 1);
+		zconf.blacklist_filename =
+			(char*) xmalloc(strlen(*v8::String::Utf8Value(value->ToString())) + 1);
 		strcpy(zconf.blacklist_filename, *v8::String::Utf8Value(value->ToString()));
 	}
 }
@@ -178,7 +190,8 @@ void libzmap::ConfigWhitelist(Handle<Object> obj) {
 
 	if (obj->Has(v8::String::NewSymbol("whitelist"))) {
 		Handle<v8::Value> value = obj->Get(String::New("whitelist"));
-		zconf.whitelist_filename = (char*) xmalloc(strlen(*v8::String::Utf8Value(value->ToString())) + 1);
+		zconf.whitelist_filename =
+			(char*) xmalloc(strlen(*v8::String::Utf8Value(value->ToString())) + 1);
 		strcpy(zconf.whitelist_filename, *v8::String::Utf8Value(value->ToString()));
 	}
 }
@@ -189,7 +202,8 @@ void libzmap::ConfigWhiteBlackLists(void) {
 	if (blacklist_init(zconf.whitelist_filename, zconf.blacklist_filename,
 				zconf.destination_cidrs, zconf.destination_cidrs_len,
 				NULL, 0)) {
-		ThrowException(Exception::TypeError(String::New("Could not initialize whitelist/blacklists specified")));
+		ThrowException(Exception::TypeError(
+			String::New("Could not initialize whitelist/blacklists specified")));
 	}
 }
 
@@ -257,11 +271,13 @@ void libzmap::ConfigSeed(void) {
 
 void libzmap::ConfigProbeModule(Handle<Object> obj) {
 	HandleScope scope;
+	libzmap lz;
 	struct gengetopt_args_info args;
 
 	if (obj->Has(v8::String::NewSymbol("probemodule"))) {
 		Handle<v8::Value> value = obj->Get(String::New("probemodule"));
-		args.probe_module_arg = (char*) xmalloc(strlen(*v8::String::Utf8Value(value->ToString())) + 1);
+		args.probe_module_arg =
+			(char*) xmalloc(strlen(*v8::String::Utf8Value(value->ToString())) + 1);
 		strcpy(args.probe_module_arg, *v8::String::Utf8Value(value->ToString()));
 	} else {
 		args.probe_module_arg = (char*) xmalloc(strlen("icmp_echoscan") + 1);
@@ -269,19 +285,51 @@ void libzmap::ConfigProbeModule(Handle<Object> obj) {
 	}
 
 	zconf.probe_module = get_probe_module_by_name(args.probe_module_arg);
-
 	if (!zconf.probe_module) {
-		ThrowException(Exception::TypeError(String::New("probe module does not exist")));
+		ThrowException(Exception::TypeError(
+			String::New("probe module does not exist")));
 	}
+
+	memset(&zconf.fsconf, 0, sizeof(struct fieldset_conf));
+
+	fielddefset_t *fds = &(zconf.fsconf.defs);
+	gen_fielddef_set(fds, (fielddef_t*) &(ip_fields), ip_fields_len);
+	gen_fielddef_set(fds, zconf.probe_module->fields,
+									 zconf.probe_module->numfields);
+	gen_fielddef_set(fds, (fielddef_t*) &(sys_fields), sys_fields_len);
+
+	args.output_module_arg = (char*) xmalloc(sizeof(struct fieldset_conf));
+
+	for (int i = 0; i < fds->len; i++) {
+		lz.strncat(args.output_module_arg, fds->fielddefs[i].name,
+							 strlen(fds->fielddefs[i].name));
+		lz.strncat(args.output_module_arg, ",", strlen(","));
+	}
+	args.output_module_arg[strlen(args.output_module_arg) - 1] = '\0';
+	zconf.raw_output_fields = args.output_module_arg;
+}
+
+char* libzmap::strncat(char *dest, const char *src, size_t n) {
+  size_t dest_len = strlen(dest);
+  size_t i;
+
+	for (i = 0 ; i < n && src[i] != '\0' ; i++)
+		dest[dest_len + i] = src[i];
+
+	dest[dest_len + i] = '\0';
+
+	return dest;
 }
 
 void libzmap::ConfigOutputModule(Handle<Object> obj) {
 	HandleScope scope;
+	libzmap lz;
 	struct gengetopt_args_info args;
 
 	if (obj->Has(v8::String::NewSymbol("outputmodule"))) {
 		Handle<v8::Value> value = obj->Get(String::New("outputmodule"));
-		args.output_module_arg = (char*) xmalloc(strlen(*v8::String::Utf8Value(value->ToString())) + 1);
+		args.output_module_arg =
+			(char*) xmalloc(strlen(*v8::String::Utf8Value(value->ToString())) + 1);
 		strcpy(args.output_module_arg, *v8::String::Utf8Value(value->ToString()));
 	} else {
 		args.probe_module_arg = (char*) xmalloc(strlen("csv") + 1);
@@ -289,13 +337,47 @@ void libzmap::ConfigOutputModule(Handle<Object> obj) {
 	}
 
 	zconf.output_module = get_output_module_by_name(args.probe_module_arg);
-	zconf.raw_output_fields = (char*) "response,saddr,daddr,sport,seq,ack,in_cooldown,is_repeat,timestamp";
-	zconf.filter_duplicates = 0;
-	zconf.filter_unsuccessful = 0;
+
+	zconf.filter_duplicates = 1;
+	zconf.filter_unsuccessful = 1;
+
+	lz.split_string(zconf.raw_output_fields, &(zconf.output_fields_len),
+									&(zconf.output_fields));
+
+	fs_generate_fieldset_translation(&zconf.fsconf.translation,
+																	 &zconf.fsconf.defs, zconf.output_fields,
+																	 zconf.output_fields_len);
 
 	if (!zconf.probe_module) {
-		ThrowException(Exception::TypeError(String::New("output module does not exist")));
+		ThrowException(Exception::TypeError(
+			String::New("output module does not exist")));
 	}
+}
+
+void libzmap::split_string(char* in, int *len, char***results)
+{
+	char** fields = (char**) xcalloc(MAX_FIELDS, sizeof(char*));
+	int retvlen = 0;
+	char *currloc = in;
+
+	while (1) {
+		size_t len = strcspn(currloc, ", ");
+		if (len == 0) {
+			currloc++;
+		} else {
+			char *newstr = (char*) xmalloc(len+1);
+			strncpy(newstr, currloc, len);
+			newstr[len] = '\0';
+			fields[retvlen++] = newstr;
+			assert(fields[retvlen-1]);
+		}
+		if (len == strlen(currloc)) {
+			break;
+		}
+		currloc += len;
+	}
+	*results = fields;
+	*len = retvlen;
 }
 
 void libzmap::ConfigBandwidth(Handle<Object> obj) {
@@ -304,7 +386,8 @@ void libzmap::ConfigBandwidth(Handle<Object> obj) {
 	if (obj->Has(v8::String::NewSymbol("bandwidth"))) {
 		Handle<v8::Value> value = obj->Get(String::New("bandwidth"));
 		zconf.bandwidth = atoi(*v8::String::Utf8Value(value->ToString()));
-		char *suffix = (char*) xmalloc(strlen(*v8::String::Utf8Value(value->ToString())) + 1);
+		char *suffix =
+			(char*) xmalloc(strlen(*v8::String::Utf8Value(value->ToString())) + 1);
 		strcpy(suffix, *v8::String::Utf8Value(value->ToString()));
 
 		while (*suffix >= '0' && *suffix <= '9') {
@@ -323,7 +406,8 @@ void libzmap::ConfigBandwidth(Handle<Object> obj) {
 				zconf.bandwidth *= 1000;
 				break;
 			default:
-				ThrowException(Exception::TypeError(String::New("Bandwidth suffix is invalid")));
+				ThrowException(Exception::TypeError(
+					String::New("Bandwidth suffix is invalid")));
 			}
 		}
 	}
@@ -360,7 +444,8 @@ void libzmap::set_cpu(void) {
 	kern_return_t ret = thread_policy_set(tid,THREAD_AFFINITY_POLICY,
 					(thread_policy_t) &policy,THREAD_AFFINITY_POLICY_COUNT);
 	if (ret != KERN_SUCCESS) {
-		ThrowException(Exception::TypeError(String::New("Cannot set CPU affinity")));
+		ThrowException(Exception::TypeError(
+			String::New("Cannot set CPU affinity")));
 	}
 	core = (core + 1) % num_cores;
 
@@ -383,9 +468,9 @@ void libzmap::set_cpu(void) {
 	CPU_ZERO(&cpuset);
 	CPU_SET(core, &cpuset);
 
-	if (pthread_setaffinity_np(pthread_self(),
-				sizeof(cpu_set_t), &cpuset) != 0) {
-		ThrowException(Exception::TypeError(String::New("Can't set thread CPU affinity")));
+	if (pthread_setaffinity_np(pthread_self(), sizeof(cpu_set_t), &cpuset) != 0) {
+		ThrowException(Exception::TypeError(
+			String::New("Can't set thread CPU affinity")));
 	}
 	core = (core + 1) % num_cores;
 	pthread_mutex_unlock(&cpu_affinity_mutex);
@@ -397,7 +482,8 @@ void libzmap::drop_privs() {
 	struct passwd *pw;
 
 	if (geteuid() != 0) {
-		ThrowException(Exception::TypeError(String::New("Unable to drop privileges")));
+		ThrowException(Exception::TypeError(
+			String::New("Unable to drop privileges")));
 	}
 
 	if ((pw = getpwnam("nobody")) != NULL) {
@@ -406,6 +492,6 @@ void libzmap::drop_privs() {
 		}
 	}
 
-	ThrowException(Exception::TypeError(String::New("Unable to drop privileges")));
+	ThrowException(Exception::TypeError(
+		String::New("Unable to drop privileges")));
 }
-

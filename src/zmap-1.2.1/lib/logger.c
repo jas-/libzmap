@@ -18,8 +18,7 @@
 #include "logger.h"
 #include "xalloc.h"
 
-static enum LogLevel log_output_level = ZLOG_DEBUG;
-//static enum LogLevel log_output_level = ZLOG_INFO;
+static enum LogLevel log_output_level = ZLOG_INFO;
 
 static FILE *log_output_stream = NULL;
 

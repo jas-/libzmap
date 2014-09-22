@@ -28,6 +28,8 @@ class libzmap : public node::ObjectWrap {
     static void set_cpu(void);
     static void summary(void);
     static void drop_privs();
+    static void split_string(char* in, int *len, char***results);
+    char* strncat(char *dest, const char *src, size_t n);
 
 		void Config(v8::Handle<v8::Object> obj);
 		void ConfigLoglevel(v8::Handle<v8::Object> obj);
