@@ -93,8 +93,6 @@ void libzmap::Threads(void) {
 			String::New("Unable to join receive threads")));
 	}
 
-	//lz.summary();
-
 	if (zconf.output_module && zconf.output_module->close) {
 		zconf.output_module->close(&zconf, &zsend, &zrecv);
 	}

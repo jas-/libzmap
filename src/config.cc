@@ -326,15 +326,8 @@ void libzmap::ConfigOutputModule(Handle<Object> obj) {
 	libzmap lz;
 	struct gengetopt_args_info args;
 
-	if (obj->Has(v8::String::NewSymbol("outputmodule"))) {
-		Handle<v8::Value> value = obj->Get(String::New("outputmodule"));
-		args.output_module_arg =
-			(char*) xmalloc(strlen(*v8::String::Utf8Value(value->ToString())) + 1);
-		strcpy(args.output_module_arg, *v8::String::Utf8Value(value->ToString()));
-	} else {
-		args.probe_module_arg = (char*) xmalloc(strlen("node-json") + 1);
-		strcpy(args.probe_module_arg, "node-json");
-	}
+	args.probe_module_arg = (char*) xmalloc(strlen("node-json") + 1);
+	strcpy(args.probe_module_arg, "node-json");
 
 	zconf.output_module = get_output_module_by_name(args.probe_module_arg);
 
