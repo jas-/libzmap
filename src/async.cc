@@ -95,7 +95,6 @@ void libzmap::Threads(void) {
 
 	//lz.summary();
 
-	log_error("module", "%s", zconf.output_module->name);
 	if (zconf.output_module && zconf.output_module->close) {
 		zconf.output_module->close(&zconf, &zsend, &zrecv);
 	}
