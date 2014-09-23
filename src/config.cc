@@ -5,12 +5,10 @@
 #include "./libzmap.h"
 
 extern "C" {
-#include <unistd.h>
 #include <pthread.h>
 
 #include "zmap-1.2.1/lib/xalloc.h"
 #include "zmap-1.2.1/lib/blacklist.h"
-#include "zmap-1.2.1/lib/logger.h"
 
 #include "zmap-1.2.1/src/types.h"
 #include "zmap-1.2.1/src/state.h"
@@ -37,6 +35,8 @@ int libzmap::max(int a, int b) {
 void libzmap::Config(Handle<Object> obj) {
 	HandleScope scope;
 	libzmap lz;
+
+	/* Disable all logging and verbosity */
 
 	lz.ConfigIface(obj);
 	lz.ConfigIpaddr(obj);
@@ -332,8 +332,8 @@ void libzmap::ConfigOutputModule(Handle<Object> obj) {
 			(char*) xmalloc(strlen(*v8::String::Utf8Value(value->ToString())) + 1);
 		strcpy(args.output_module_arg, *v8::String::Utf8Value(value->ToString()));
 	} else {
-		args.probe_module_arg = (char*) xmalloc(strlen("csv") + 1);
-		strcpy(args.probe_module_arg, "csv");
+		args.probe_module_arg = (char*) xmalloc(strlen("node-json") + 1);
+		strcpy(args.probe_module_arg, "node-json");
 	}
 
 	zconf.output_module = get_output_module_by_name(args.probe_module_arg);

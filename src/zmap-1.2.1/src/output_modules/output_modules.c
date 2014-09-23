@@ -11,7 +11,7 @@
 
 #include "output_modules.h"
 
-extern output_module_t module_csv_file;
+extern output_module_t module_csv_file;extern output_module_t module_node_json;
 
 #ifdef REDIS
 extern output_module_t module_redis;
@@ -29,9 +29,9 @@ output_module_t* output_modules[] = {
 	&module_csv_redis,
 #endif
 #ifdef JSON
-	&module_json_file
+	&module_json_file,
 #endif
-	// ADD YOUR MODULE HERE
+	&module_node_json
 };
 
 output_module_t* get_output_module_by_name(const char* name)
@@ -52,4 +52,3 @@ void print_output_modules(void)
 		printf("%s\n", output_modules[i]->name);
 	}
 }
-
