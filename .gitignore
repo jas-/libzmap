@@ -4,4 +4,4 @@ npm-debug.log
 binding.Makefile
 zmap.target.mk
 Makefile
-src/zmap-1.2.1/output_modules/output_modules.c
+src/zmap-1.2.1
