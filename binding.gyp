@@ -7,10 +7,11 @@
       'cwd': '<!(pwd)',
       'path': 'src/zmap-1.2.1',
       'ld': '<!(export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:<(cwd)/build/Release)',
+      'ldpath': 'build/Release',
       'lexer': '<!(flex -o"<(path)/src/lexer.c" --header-file="<(path)/src/lexer.h" "<(path)/src/lexer.l")',
       'parser': '<!(byacc -d -o "<(path)/src/parser.c" "<(path)/src/parser.y")',
-      'modules1': "<!(sed -i 's/extern output_module_t module_csv_file;/extern output_module_t module_node_json;/' <(path)/src/output_modules/output_modules.c)",
-      'modules2': "<!(sed -i 's/\&module_csv_file,/\&module_node_json,/' <(path)/src/output_modules/output_modules.c)",
+#      'modules1': "<!(sed -i 's/extern output_module_t module_csv_file;/extern output_module_t module_node_json;/' <(path)/src/output_modules/output_modules.c)",
+#      'modules2': "<!(sed -i 's/\&module_csv_file,/\&module_node_json,/' <(path)/src/output_modules/output_modules.c)",
     },
     "include_dirs": [
       "<(path)/lib",
@@ -80,13 +81,14 @@
       "<(path)/src/validate.c",
       "<(path)/src/zopt.c",
       "<(path)/src/zmap.c",
+      "<(path)/src/output_modules/module_csv.c",
       "<(path)/src/output_modules/output_modules.c",
       "<(path)/src/probe_modules/module_icmp_echo.c",
       "<(path)/src/probe_modules/module_tcp_synscan.c",
       "<(path)/src/probe_modules/module_udp.c",
       "<(path)/src/probe_modules/packet.c",
       "<(path)/src/probe_modules/probe_modules.c",
-      "src/module.c",
+#      "src/module.c",
     ]
   },
   {
@@ -105,16 +107,16 @@
 			"zmap",
 		],
 		"sources": [
-			"src/config.cc",
 			"src/output.cc",
+			"src/config.cc",
 			"src/async.cc",
 			"src/libzmap.cc",
 		],
-    "libraries":[
-      "<(cwd)/<(ldpath)/zmap.so"
-    ],
 		"conditions": [
       ['OS=="linux"', {
+        "libraries":[
+          "<(cwd)/<(ldpath)/zmap.so"
+        ],
         "cflags": [
           "-fPIC",
           "-O2",
@@ -123,9 +125,6 @@
           "-pthread",
         ]
 			}]
-		],
-		"include_dirs" : [
-			"<!(node -e \"require('nan')\")"
 		],
 	}],
 }

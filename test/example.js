@@ -15,5 +15,5 @@ var lib = require('../build/Release/zmap.node')
 
 lib.zmap(opts, function(err, result) {
   console.log(err);
-  console.log(result);
+  //console.log(result);
 });

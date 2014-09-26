@@ -7,6 +7,7 @@
 extern "C" {
 #include "zmap-1.2.1/src/types.h"
 #include "zmap-1.2.1/src/shard.h"
+#include "zmap-1.2.1/src/fieldset.h"
 }
 
 typedef struct send_arg {
@@ -26,7 +27,6 @@ class libzmap : public node::ObjectWrap {
     static void* start_recv(void *arg);
     static void* start_send(void *arg);
     static void set_cpu(void);
-    static void summary(void);
     static void drop_privs();
     static void split_string(char* in, int *len, char***results);
     char* strncat(char *dest, const char *src, size_t n);
@@ -45,7 +45,6 @@ class libzmap : public node::ObjectWrap {
 		void ConfigOutputModule(v8::Handle<v8::Object> obj);
     void ConfigBandwidth(v8::Handle<v8::Object> obj);
     void ConfigThreads(v8::Handle<v8::Object> obj);
-
 		void ConfigWhiteBlackLists(void);
 		void ConfigTargets(void);
 		void ConfigCores(void);
@@ -53,6 +52,7 @@ class libzmap : public node::ObjectWrap {
 
     void Threads(void);
 
+    v8::Handle<v8::Value> Summary(void);
 		static v8::Handle<v8::Value> LibZMAP(const v8::Arguments& args);
 
 	private:

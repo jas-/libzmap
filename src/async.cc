@@ -93,10 +93,6 @@ void libzmap::Threads(void) {
 			String::New("Unable to join receive threads")));
 	}
 
-	// send &zconf, &zsend & &zrecv to output.cc for JSON
-	// object formatting and callback
-	lz.summary();
-
 	if (zconf.output_module && zconf.output_module->close) {
 		zconf.output_module->close(&zconf, &zsend, &zrecv);
 	}

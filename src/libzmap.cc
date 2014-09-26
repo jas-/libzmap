@@ -45,9 +45,9 @@ Handle<Value> libzmap::LibZMAP(const Arguments& args) {
 
   lz.Threads();
 
-  /* return NULL error & JSON object to specified callback param */
-
-	return scope.Close(Undefined());
+  const unsigned argc = 1;
+  Local<Value> argv[argc] = { Local<Value>::New(lz.Summary()) };
+  return callback->Call(Context::GetCurrent()->Global(), argc, argv);
 }
 
 void libzmap::Init (Handle<Object> exports) {
