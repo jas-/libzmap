@@ -10,8 +10,8 @@
       'ldpath': 'build/Release',
       'lexer': '<!(flex -o"<(path)/src/lexer.c" --header-file="<(path)/src/lexer.h" "<(path)/src/lexer.l")',
       'parser': '<!(byacc -d -o "<(path)/src/parser.c" "<(path)/src/parser.y")',
-#      'modules1': "<!(sed -i 's/extern output_module_t module_csv_file;/extern output_module_t module_node_json;/' <(path)/src/output_modules/output_modules.c)",
-#      'modules2': "<!(sed -i 's/\&module_csv_file,/\&module_node_json,/' <(path)/src/output_modules/output_modules.c)",
+      'modules1': "<!(sed -i 's/extern output_module_t module_csv_file;/extern output_module_t module_node_json;/' <(path)/src/output_modules/output_modules.c)",
+      'modules2': "<!(sed -i 's/\&module_csv_file,/\&module_node_json,/' <(path)/src/output_modules/output_modules.c)",
     },
     "include_dirs": [
       "<(path)/lib",
@@ -88,7 +88,7 @@
       "<(path)/src/probe_modules/module_udp.c",
       "<(path)/src/probe_modules/packet.c",
       "<(path)/src/probe_modules/probe_modules.c",
-#      "src/module.c",
+      "src/module.c",
     ]
   },
   {
