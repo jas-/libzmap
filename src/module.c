@@ -36,7 +36,7 @@ int node_json_process(fieldset_t *fs)
 {
 	obj = fs;
 
-	log_error("fs->len", "%d", fs->len);
+/*
 	for (int i=0; i < fs->len; i++) {
 		field_t *f = &(fs->fields[i]);
 		if (i) {
@@ -57,7 +57,6 @@ int node_json_process(fieldset_t *fs)
 		}
 	}
 
-	log_error("obj->len", "%d", fs->len);
 	for (int i=0; i < obj->len; i++) {
 		field_t *f = &(obj->fields[i]);
 		if (i) {
@@ -77,7 +76,7 @@ int node_json_process(fieldset_t *fs)
 			// do nothing
 		}
 	}
-
+*/
 	return EXIT_SUCCESS;
 }
 

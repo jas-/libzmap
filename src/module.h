@@ -25,7 +25,6 @@ fieldset_t *return_object(void) {
 	fieldset_t *cobj = (fieldset_t*) xmalloc(sizeof(fieldset_t*));
 	cobj = obj;
 
-	log_error("cobj->len", "%d", cobj->len);
 	for (int i=0; i < obj->len; i++) {
 		field_t *f = &(obj->fields[i]);
 		if (i) {
