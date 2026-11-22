@@ -10,7 +10,6 @@
 static int lz_pthread_create(pthread_t *thread, const pthread_attr_t *attr,
                              void *(*start)(void *), void *arg);
 static int lz_pthread_join(pthread_t thread, void **value);
-static int lz_fclose(FILE *fp);
 static int lz_drop_privs(void);
 
 #define main zmap_cli_main
@@ -19,8 +18,9 @@ static int lz_drop_privs(void);
 /* Records that scan threads run, so exit() can no longer unwind. */
 #define pthread_create lz_pthread_create
 #define pthread_join lz_pthread_join
-/* Upstream closes its log stream at the end, which is stderr by default. */
-#define fclose lz_fclose
+/* Upstream never closes its send sockets. Record them, so each scan closes its own. */
+#define get_socket lz_get_socket
+#define get_dryrun_socket lz_get_dryrun_socket
 
 #include "zmap.c"
 
@@ -28,7 +28,12 @@ static int lz_drop_privs(void);
 #undef drop_privs
 #undef pthread_create
 #undef pthread_join
-#undef fclose
+#undef get_socket
+#undef get_dryrun_socket
+
+/* socket.h declared them under the names above. */
+sock_t get_socket(uint32_t id);
+sock_t get_dryrun_socket(void);
 
 static struct state_conf lz_initial_zconf;
 static struct state_send lz_initial_zsend;
@@ -90,12 +95,49 @@ lz_join_threads(void)
     return failed ? -1 : 0;
 }
 
-static int
-lz_fclose(FILE *fp)
+#define LZ_MAX_SOCKETS 512
+static int lz_sockets[LZ_MAX_SOCKETS];
+static int lz_socket_count;
+
+static sock_t
+lz_record_socket(sock_t s)
 {
-    if (fp == NULL || fp == stdin || fp == stdout || fp == stderr)
-        return 0;
-    return fclose(fp);
+    if (s.sock > 0)
+        lz_record_fd(s.sock);
+    return s;
+}
+
+/* Records a descriptor that the scan must close when it ends (see get-gateway-hooks.c). */
+void
+lz_record_fd(int fd)
+{
+    if (fd >= 0 && lz_socket_count < LZ_MAX_SOCKETS)
+        lz_sockets[lz_socket_count++] = fd;
+}
+
+sock_t
+lz_get_socket(uint32_t id)
+{
+    return lz_record_socket(get_socket(id));
+}
+
+sock_t
+lz_get_dryrun_socket(void)
+{
+    return lz_record_socket(get_dryrun_socket());
+}
+
+/* Frees what upstream leaves to the end of the process. Call only when no scan thread runs. */
+static void
+lz_release(void)
+{
+    int i;
+
+    for (i = 0; i < lz_socket_count; i++)
+        close(lz_sockets[i]);
+    lz_socket_count = 0;
+    lz_recv_close();
+    lz_close_files();
 }
 
 static int
@@ -120,6 +162,7 @@ lz_reset_globals(void)
 
     lz_threads_started = 0;
     lz_thread_count = 0;
+    lz_socket_count = 0;
     lz_thread_failed = 0;
     lz_exit_code = 0;
 }
@@ -172,8 +215,10 @@ lz_run(int argc, char **argv, struct lz_run_result *result)
     lz_runner_thread = pthread_self();
 
     if (setjmp(trap)) {
-        /* zmap called exit() or log_fatal(). */
+        /* zmap called exit() or log_fatal(). Every scan thread has ended, unless the module is poisoned. */
         lz_exit_jmp = NULL;
+        if (!lz_poisoned)
+            lz_release();
         result->failed = 1;
         result->exit_code = lz_exit_code ? lz_exit_code : 1;
         return -1;
@@ -184,6 +229,7 @@ lz_run(int argc, char **argv, struct lz_run_result *result)
     optind = 0;
     rc = zmap_cli_main(argc, argv);
     lz_exit_jmp = NULL;
+    lz_release();
 
     if (lz_thread_failed) {
         /* A scan thread called exit() and ended, so the results are incomplete. */

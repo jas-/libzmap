@@ -11,8 +11,10 @@
 
 #include "logger.h"
 
-/* Declared in shim/libzmap-shim.h, which this file does not include. */
+/* Declared in shim/libzmap-shim.h and shim/include/assert.h, which this file does not include. */
 void libzmap_exit(int code) __attribute__((noreturn));
+void libzmap_assert_fail(const char *expr, const char *file, int line)
+    __attribute__((noreturn));
 
 struct lz_scan *volatile lz_current = NULL;
 
@@ -234,6 +236,92 @@ libzmap_printf(const char *fmt, ...)
     length = libzmap_vfprintf(stdout, fmt, ap);
     va_end(ap);
     return length;
+}
+
+void
+libzmap_assert_fail(const char *expr, const char *file, int line)
+{
+    const char *base = strrchr(file, '/');
+
+    log_fatal("zmap", "internal check failed: %s (%s:%d)", expr,
+              base ? base + 1 : file, line);
+}
+
+/* ---- Files that upstream opens (see shim/libzmap-shim.h) ---- */
+
+#define LZ_MAX_FILES 64
+static FILE *lz_files[LZ_MAX_FILES];
+static pthread_mutex_t lz_files_lock = PTHREAD_MUTEX_INITIALIZER;
+
+FILE *
+libzmap_fopen(const char *path, const char *mode)
+{
+    FILE *fp = fopen(path, mode);
+    int i;
+
+    if (fp == NULL)
+        return NULL;
+    pthread_mutex_lock(&lz_files_lock);
+    for (i = 0; i < LZ_MAX_FILES; i++) {
+        if (lz_files[i] == NULL) {
+            lz_files[i] = fp;
+            break;
+        }
+    }
+    pthread_mutex_unlock(&lz_files_lock);
+    return fp;
+}
+
+int
+libzmap_fclose(FILE *fp)
+{
+    int i;
+
+    if (fp == NULL || fp == stdin || fp == stdout || fp == stderr)
+        return 0;
+    pthread_mutex_lock(&lz_files_lock);
+    for (i = 0; i < LZ_MAX_FILES; i++) {
+        if (lz_files[i] == fp)
+            lz_files[i] = NULL;
+    }
+    pthread_mutex_unlock(&lz_files_lock);
+    return fclose(fp);
+}
+
+/* Closes the files that upstream left open: on a failure, and the metadata file, which upstream never closes. */
+void
+lz_close_files(void)
+{
+    int i;
+
+    pthread_mutex_lock(&lz_files_lock);
+    for (i = 0; i < LZ_MAX_FILES; i++) {
+        if (lz_files[i] != NULL) {
+            fclose(lz_files[i]);
+            lz_files[i] = NULL;
+        }
+    }
+    pthread_mutex_unlock(&lz_files_lock);
+}
+
+/*
+ * ---- lib/lockfd.c ----
+ * Upstream locks stdout and stderr around its terminal output, and can call
+ * exit() with the lock held. That would leave the lock with an ended thread.
+ * The module sends that output to events, which hooks.c serializes, so no lock is needed.
+ */
+int
+lock_file(FILE *f)
+{
+    (void)f;
+    return 0;
+}
+
+int
+unlock_file(FILE *f)
+{
+    (void)f;
+    return 0;
 }
 
 int

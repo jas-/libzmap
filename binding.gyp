@@ -22,10 +22,13 @@
         "<!@(node scripts/sources.js)",
         "src/runner.c",
         "src/blocklist-hooks.c",
+        "src/recv-pcap-hooks.c",
+        "src/get-gateway-hooks.c",
         "src/monitor-hooks.c",
         "src/output.c"
       ],
-      "include_dirs": [ "<@(zmap_include)" ],
+      # shim/include first: its assert.h replaces the system one.
+      "include_dirs": [ "src/shim/include", "<@(zmap_include)" ],
       "cflags": [ "-fPIC", "-fvisibility=hidden", "-std=gnu11", "-O2", "-w", "-include", "<(shim)" ],
       "xcode_settings": {
         "OTHER_CFLAGS": [ "-std=gnu11", "-O2", "-w", "-include", "<(shim)" ],

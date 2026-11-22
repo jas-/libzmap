@@ -107,6 +107,13 @@ extern volatile int lz_poisoned;
 void lz_push(struct lz_scan *scan, struct lz_event *ev);
 void lz_log_text(int level, const char *module, const char *text);
 void lz_set_verbosity(int level);
+void lz_close_files(void);
+
+/* runner.c */
+void lz_record_fd(int fd);
+
+/* recv-pcap-hooks.c */
+void lz_recv_close(void);
 
 /* runner.c */
 int lz_run(int argc, char **argv, struct lz_run_result *result);

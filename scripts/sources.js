@@ -13,16 +13,16 @@ if (!fs.existsSync(path.join(zmap, 'src', 'zmap.c'))) {
 
 const linux = process.platform === 'linux';
 
-// lib/logger.c: replaced by src/hooks.c. lib/blocklist.c: compiled through src/blocklist-hooks.c.
+// lib/logger.c and lib/lockfd.c: replaced by src/hooks.c. lib/blocklist.c: through src/blocklist-hooks.c.
 const lib = fs.readdirSync(path.join(zmap, 'lib'))
-  .filter((f) => f.endsWith('.c') && f !== 'logger.c' && f !== 'blocklist.c')
+  .filter((f) => f.endsWith('.c') && !['logger.c', 'blocklist.c', 'lockfd.c'].includes(f))
   .sort()
   .map((f) => `src/zmap/lib/${f}`);
 
-// zmap.c: compiled through src/runner.c. monitor.c: through src/monitor.c.
+// zmap.c: through src/runner.c. monitor.c, recv-pcap.c, get_gateway.c: through src/*-hooks.c.
 const core = [
-  'aesrand.c', 'cyclic.c', 'expression.c', 'fieldset.c', 'filter.c', 'get_gateway.c',
-  'iterator.c', 'ports.c', 'recv.c', 'recv-pcap.c', 'send.c', 'shard.c', 'socket.c',
+  'aesrand.c', 'cyclic.c', 'expression.c', 'fieldset.c', 'filter.c',
+  'iterator.c', 'ports.c', 'recv.c', 'send.c', 'shard.c', 'socket.c',
   'state.c', 'summary.c', 'utility.c', 'validate.c', 'zopt_compat.c',
   ...(linux ? ['socket-linux.c', 'send-linux.c'] : ['socket-bsd.c', 'send-bsd.c']),
 ].map((f) => `src/zmap/src/${f}`);

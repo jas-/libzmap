@@ -152,3 +152,30 @@ test('the report is JSON', async () => {
   // A 64-bit seed is kept as a string, not rounded.
   assert.equal(report.metadata.seed, '9223372036854775807');
 });
+
+test('a failed zmap assertion rejects the scan and does not end the process', async () => {
+  // zmap's split_string() asserts on more than 128 entries.
+  const cores = Array.from({ length: 200 }, (_, i) => i % 4).join(',');
+  await assert.rejects(dry({ range: '10.0.0.0/30', cores }), (err) => {
+    assert.equal(err.code, 'ERR_ZMAP_SCAN');
+    assert.match(err.message, /internal check failed/);
+    return true;
+  });
+  assert.equal(zmap.isRunning(), false);
+  await dry({ range: '10.0.0.0/30' });
+});
+
+test('scans do not leak file descriptors', async () => {
+  const fs = require('node:fs');
+  const dir = process.platform === 'linux' ? '/proc/self/fd' : '/dev/fd';
+  const count = () => fs.readdirSync(dir).length;
+  const options = { range: '10.0.0.0/30', threads: 2, metadataFile: '/dev/null', statusUpdatesFile: '/dev/null' };
+
+  await dry(options);
+  const before = count();
+  for (let i = 0; i < 10; i++) {
+    await dry(options);
+    await dry({ ...options, maxTargets: 'x' }).catch(() => {});
+  }
+  assert.ok(count() <= before + 1, `${count() - before} descriptors leaked`);
+});

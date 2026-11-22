@@ -18,6 +18,8 @@ int libzmap_vfprintf(FILE *fp, const char *fmt, va_list ap);
 int libzmap_printf(const char *fmt, ...)
     __attribute__((format(printf, 1, 2)));
 int libzmap_signal(int sig);
+FILE *libzmap_fopen(const char *path, const char *mode);
+int libzmap_fclose(FILE *fp);
 
 #undef exit
 #define exit(code) libzmap_exit(code)
@@ -30,6 +32,13 @@ int libzmap_signal(int sig);
 
 #undef vfprintf
 #define vfprintf(fp, fmt, ap) libzmap_vfprintf((fp), (fmt), (ap))
+
+/* Files that upstream opens are closed when a scan ends, also when it fails. Never closes stdio. */
+#undef fopen
+#define fopen(path, mode) libzmap_fopen((path), (mode))
+
+#undef fclose
+#define fclose(fp) libzmap_fclose(fp)
 
 /* zmap sets SIGUSR1/SIGUSR2 handlers to change the send rate. Node.js uses SIGUSR1. */
 #undef signal
