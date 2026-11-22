@@ -57,7 +57,16 @@ function check() {
   }
 }
 
+// npm only warns about "engines". Stop the install here instead.
+function checkNode() {
+  const major = Number(process.versions.node.split('.')[0]);
+  if (major < 22) {
+    throw new Error(`Node.js 22 or later is necessary. This is Node.js ${process.versions.node}.`);
+  }
+}
+
 async function main() {
+  checkNode();
   if (process.argv.includes('--check')) {
     check();
     return;

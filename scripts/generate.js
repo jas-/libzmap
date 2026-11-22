@@ -2,6 +2,7 @@
 // Makes the generated zmap sources (option parser, filter lexer and parser) in src/gen.
 // The npm package includes src/gen, so an install from npm needs no gengetopt, flex or byacc.
 
+const crypto = require('node:crypto');
 const fs = require('node:fs');
 const path = require('node:path');
 const { execFileSync } = require('node:child_process');
@@ -14,17 +15,20 @@ const { zmap: pin } = require(path.join(root, 'package.json'));
 const outputs = ['zopt.c', 'zopt.h', 'lexer.c', 'lexer.h', 'parser.c', 'parser.h'].map((f) => path.join(gen, f));
 const inputs = ['zopt.ggo.in', 'lexer.l', 'parser.y'].map((f) => path.join(zsrc, f));
 
-function mtime(file) {
-  try {
-    return fs.statSync(file).mtimeMs;
-  } catch {
-    return 0;
-  }
+// The hash of the inputs is in src/gen/STAMP. File times do not help: npm does not keep them.
+const stampFile = path.join(gen, 'STAMP');
+
+function stamp() {
+  const hash = crypto.createHash('sha256').update(pin.version);
+  for (const file of inputs) hash.update(fs.readFileSync(file));
+  return hash.digest('hex');
 }
 
 function upToDate() {
-  const oldest = Math.min(...outputs.map(mtime));
-  return oldest > 0 && inputs.every((f) => !fs.existsSync(f) || mtime(f) <= oldest);
+  if (!outputs.every((f) => fs.existsSync(f)) || !fs.existsSync(stampFile)) return false;
+  // Without the zmap sources, the generated files are all there is.
+  if (!inputs.every((f) => fs.existsSync(f))) return true;
+  return fs.readFileSync(stampFile, 'utf8').trim() === stamp();
 }
 
 function have(tool) {
@@ -59,6 +63,7 @@ function main() {
   // byacc, or bison in yacc mode when byacc is not installed.
   if (have('byacc')) run('byacc', ['-d', '-o', 'parser.c', path.join(zsrc, 'parser.y')]);
   else run('bison', ['-y', '-d', '-o', 'parser.c', path.join(zsrc, 'parser.y')]);
+  fs.writeFileSync(stampFile, `${stamp()}\n`);
   console.log('libzmap: generated src/gen');
 }
 
