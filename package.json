@@ -1,11 +1,29 @@
 {
   "name": "libzmap",
-  "version": "0.0.1",
-  "description": "zmap bindings for node.js",
+  "version": "1.0.0",
+  "description": "In-process Node.js bindings for the zmap network scanner",
+  "main": "index.js",
   "author": "Jason Gerfen <jason.gerfen@gmail.com>",
+  "license": "Apache-2.0",
   "keywords": [
     "zmap",
-    "nmap network scanner"
+    "libzmap",
+    "network-scanner",
+    "scanner",
+    "port-scanner",
+    "host-discovery",
+    "icmp",
+    "tcp",
+    "udp",
+    "syn-scan",
+    "network",
+    "security",
+    "reconnaissance",
+    "pcap",
+    "native",
+    "addon",
+    "n-api",
+    "napi"
   ],
   "repository": {
     "type": "git",
@@ -14,18 +32,38 @@
   "bugs": {
     "url": "https://github.com/jas-/libzmap/issues"
   },
+  "gypfile": true,
+  "os": [
+    "linux",
+    "darwin"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "files": [
+    "index.js",
+    "lib/",
+    "binding.gyp",
+    "scripts/",
+    "src/*.c",
+    "src/*.h",
+    "src/shim/",
+    "src/gen/",
+    "src/zmap/src/",
+    "src/zmap/lib/",
+    "src/zmap/conf/",
+    "src/zmap/LICENSE",
+    "examples/"
+  ],
   "scripts": {
-    "install": "node-gyp rebuild",
-    "start": "node index.js",
-    "test": "make test"
+    "install": "node scripts/fetch-zmap.js && node scripts/generate.js && node-gyp rebuild",
+    "build": "node scripts/fetch-zmap.js && node scripts/generate.js && node-gyp rebuild -j max",
+    "prepack": "node scripts/fetch-zmap.js --check && node scripts/generate.js",
+    "test": "node --test test/*.test.js"
   },
-  "devDependencies": {
-    "mocha": "~1.17.0",
-    "chai": "~1.8.1"
-  },
-  "license": "Apache 2.0",
-  "engine": "node >= v0.10.30",
-  "dependencies": {
-    "nan": "^1.3.0"
+  "zmap": {
+    "repository": "https://github.com/zmap/zmap",
+    "version": "v4.4.0",
+    "commit": "651ed713759a12e283c449259b2f6fa027ccf9b5"
   }
 }

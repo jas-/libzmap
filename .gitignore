@@ -1,7 +1,10 @@
 build
 node_modules
 npm-debug.log
-binding.Makefile
-zmap.target.mk
-Makefile
-src/zmap-1.2.1
+config.gypi
+*.node
+
+# Local test harness
+vm/
+.vm/
+src/gen/

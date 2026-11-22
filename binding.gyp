@@ -1,130 +1,58 @@
 {
-	"targets":
-	[{
-		"target_name": "zmap",
-		"type": "shared_library",
-    "variables": {
-      'cwd': '<!(pwd)',
-      'path': 'src/zmap-1.2.1',
-      'ld': '<!(export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:<(cwd)/build/Release)',
-      'ldpath': 'build/Release',
-      'lexer': '<!(flex -o"<(path)/src/lexer.c" --header-file="<(path)/src/lexer.h" "<(path)/src/lexer.l")',
-      'parser': '<!(byacc -d -o "<(path)/src/parser.c" "<(path)/src/parser.y")',
-      'modules1': "<!(sed -i 's/extern output_module_t module_csv_file;/extern output_module_t module_node_json;/' <(path)/src/output_modules/output_modules.c)",
-      'modules2': "<!(sed -i 's/\&module_csv_file,/\&module_node_json,/' <(path)/src/output_modules/output_modules.c)",
-    },
-    "include_dirs": [
-      "<(path)/lib",
-      "<(path)/src",
-      "<(path)/src/output_modules",
-    ],
-    "conditions": [
-      ['OS=="linux"', {
-        "cflags": [
-          "-Wall",
-          "-Wformat=2",
-          "-Wno-format-nonliteral",
-          "-pedantic",
-          "-fno-strict-aliasing",
-          "-Wextra",
-          "-Wfloat-equal",
-          "-Wundef",
-          "-Wwrite-strings",
-          "-Wredundant-decls",
-          "-Wnested-externs",
-          "-Wbad-function-cast",
-          "-Winit-self",
-          "-Wmissing-noreturn",
-          "-Wstack-protector",
-          "-std=gnu99",
-          "-U_FORTIFY_SOURCE",
-          "-D_FORTIFY_SOURCE=2",
-          "-fstack-protector-all",
-          "-fwrapv",
-          "-fPIC",
-          "--param ssp-buffer-size=1",
-          "-O2",
-        ],
-        "link_settings": {
-          "libraries": [
-            "-pthread",
-            "-lpcap",
-            "-lgmp",
-            "-lfl",
-            "-lm"
-          ]
-        },
-      }]
-    ],
-    "sources": [
-      "<(path)/lib/blacklist.c",
-      "<(path)/lib/constraint.c",
-      "<(path)/lib/logger.c",
-      "<(path)/lib/pbm.c",
-      "<(path)/lib/random.c",
-      "<(path)/lib/rijndael-alg-fst.c",
-      "<(path)/lib/xalloc.c",
-      "<(path)/src/aesrand.c",
-      "<(path)/src/cyclic.c",
-      "<(path)/src/expression.c",
-      "<(path)/src/fieldset.c",
-      "<(path)/src/filter.c",
-      "<(path)/src/get_gateway.c",
-      "<(path)/src/iterator.c",
-      "<(path)/src/lexer.c",
-      "<(path)/src/monitor.c",
-      "<(path)/src/parser.c",
-      "<(path)/src/send.c",
-      "<(path)/src/shard.c",
-      "<(path)/src/state.c",
-      "<(path)/src/recv.c",
-      "<(path)/src/validate.c",
-      "<(path)/src/zopt.c",
-      "<(path)/src/zmap.c",
-      "<(path)/src/output_modules/module_csv.c",
-      "<(path)/src/output_modules/output_modules.c",
-      "<(path)/src/probe_modules/module_icmp_echo.c",
-      "<(path)/src/probe_modules/module_tcp_synscan.c",
-      "<(path)/src/probe_modules/module_udp.c",
-      "<(path)/src/probe_modules/packet.c",
-      "<(path)/src/probe_modules/probe_modules.c",
-      "src/module.c",
+  "variables": {
+    "shim": "<(module_root_dir)/src/shim/libzmap-shim.h",
+    "zmap_include": [
+      "src",
+      "src/gen",
+      "src/zmap/lib",
+      "src/zmap/src",
+      "src/zmap/src/output_modules",
+      "<!@(node scripts/deps.js include)"
     ]
   },
-  {
-		"target_name": "libzmap",
-		"type": "loadable_module",
-    "variables": {
-      'cwd': '<!(pwd)',
-      'path': 'src/zmap-1.2.1',
-      'ldpath': 'build/Release',
+  "target_defaults": {
+    "xcode_settings": { "MACOSX_DEPLOYMENT_TARGET": "11.0" }
+  },
+  "targets": [
+    {
+      # Unmodified upstream zmap with the shim force-included, and the files that adapt it.
+      "target_name": "zmap_core",
+      "type": "static_library",
+      "sources": [
+        "<!@(node scripts/sources.js)",
+        "src/runner.c",
+        "src/blocklist-hooks.c",
+        "src/monitor-hooks.c",
+        "src/output.c"
+      ],
+      "include_dirs": [ "<@(zmap_include)" ],
+      "cflags": [ "-fPIC", "-fvisibility=hidden", "-std=gnu11", "-O2", "-w", "-include", "<(shim)" ],
+      "xcode_settings": {
+        "OTHER_CFLAGS": [ "-std=gnu11", "-O2", "-w", "-include", "<(shim)" ],
+        "GCC_SYMBOLS_PRIVATE_EXTERN": "YES",
+        "GCC_WARN_INHIBIT_ALL_WARNINGS": "YES"
+      }
     },
-		"include_dirs": [
-			"<(path)/lib",
-			"<(path)/src",
-	  ],
-		"dependencies": [
-			"zmap",
-		],
-		"sources": [
-			"src/output.cc",
-			"src/config.cc",
-			"src/async.cc",
-			"src/libzmap.cc",
-		],
-		"conditions": [
-      ['OS=="linux"', {
-        "libraries":[
-          "<(cwd)/<(ldpath)/zmap.so"
-        ],
-        "cflags": [
-          "-fPIC",
-          "-O2",
-				],
-				"ldflags": [
-          "-pthread",
-        ]
-			}]
-		],
-	}],
+    {
+      "target_name": "zmap",
+      "dependencies": [ "zmap_core" ],
+      "sources": [ "src/addon.c", "src/hooks.c" ],
+      "include_dirs": [ "<@(zmap_include)" ],
+      # Hidden symbols stop the host process from replacing zmap functions on Linux.
+      "cflags": [ "-fvisibility=hidden", "-std=gnu11", "-O2" ],
+      "xcode_settings": {
+        "OTHER_CFLAGS": [ "-std=gnu11", "-O2" ],
+        "GCC_SYMBOLS_PRIVATE_EXTERN": "YES"
+      },
+      "libraries": [ "<!@(node scripts/deps.js libs)" ],
+      "conditions": [
+        [ "OS=='linux'", {
+          "libraries": [ "-lm", "-ldl", "-lpthread" ]
+        }],
+        [ "OS=='mac'", {
+          "libraries": [ "-lm" ]
+        }]
+      ]
+    }
+  ]
 }
