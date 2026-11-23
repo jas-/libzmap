@@ -10,12 +10,6 @@ Build & leverage [zmap](https://github.com/zmap/zmap) as a node.js module, no ne
 
 To install `npm install libzmap`
 
-The install compiles zmap v4.4.0 and needs Linux or macOS (x86_64 or arm64), node.js 22 or later, and the packages in `build tools`.
-
-Some package managers (pnpm, yarn, bun, and npm with `ignore-scripts`) do not
-run install scripts unless you allow them. If `require('libzmap')` gives the
-error "Cannot find module './build/Release/zmap.node'", allow the install script
-of `libzmap` and run `npm rebuild libzmap`.
 
 ### build tools ###
 

@@ -49,9 +49,7 @@
     "src/*.h",
     "src/shim/",
     "src/gen/",
-    "src/zmap/src/",
-    "src/zmap/lib/",
-    "src/zmap/conf/",
+    "!src/gen/zopt.ggo",
     "src/zmap/LICENSE",
     "examples/"
   ],
@@ -64,6 +62,7 @@
   "zmap": {
     "repository": "https://github.com/zmap/zmap",
     "version": "v4.4.0",
-    "commit": "651ed713759a12e283c449259b2f6fa027ccf9b5"
+    "commit": "651ed713759a12e283c449259b2f6fa027ccf9b5",
+    "sha256": "ea9fb627f0fd6f6613da68668bd060cc308780c95d827158daa5c37ad565b65c"
   }
 }
